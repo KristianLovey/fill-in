@@ -166,11 +166,28 @@ The dashboard in the other:
 python web/app.py           # http://127.0.0.1:5000
 ```
 
-The dashboard is two columns. **Handled without you**, in teal, is the audit log
-— everything the agent did alone. **Waiting for you**, in warm amber, is
-unresolved escalations, and that colour appears nowhere else in the interface.
-In-flight asks still inside their response window are grey: nothing has happened
-yet, and nothing should.
+The dashboard is two columns, and the contrast between them is the whole pitch.
+
+**Handled without you** — left, teal — shows every shift the agent is working as
+a card with its *ask chain* inside it: who it asked, in what order, what came
+back, who is still deciding and how long they have left, and how many asks remain
+before the limit forces a human in. Underneath sits the full audit log.
+
+**Waiting for you** — right, amber — holds unresolved escalations, each carrying
+enough context to act on without opening anything else: what the shift is, what
+certificate it needs, who has already been contacted, and what the agent
+suggests. That amber appears nowhere else in the interface. When nothing needs
+you, the column says so in teal, because that is the product working rather than
+an empty screen.
+
+The right-hand rail also carries **Fairness** — 30-day load for the three
+heaviest carriers against the three the agent reaches for instead, drawn on one
+shared scale — plus **the roster this week** as one dot per shift, and the
+**policy** the tools enforce.
+
+Colour is assigned by job, not by taste. Brand teal (3.3:1 on white) and amber
+(2.2:1) are strong enough for a border or a bar and far too weak for 11px type,
+so every label wears a darkened step of the same hue: measured, not eyeballed.
 
 ## Two scenarios
 

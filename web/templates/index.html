@@ -5,268 +5,782 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fill In</title>
 <style>
-  /* One typeface, white ground, near-black text. Teal is everything the agent
-     did alone. Amber is the one thing that needs a person, and it appears
-     nowhere else in this file. */
+  /* ------------------------------------------------------------------ tokens
+     Marks and text are separate tokens on purpose. The brand teal (3.3:1 on
+     white) and amber (2.2:1) are strong enough for a border or a bar and far
+     too weak for 11px type, so every label uses a darkened step of the same
+     hue. Contrast ratios are in the comments and were measured, not guessed.  */
   :root {
-    --teal: #1A9E8F;
-    --teal-wash: rgba(26, 158, 143, 0.055);
-    --teal-flash: rgba(26, 158, 143, 0.22);
-    --amber: #E8A33D;
-    --amber-wash: #FDF5E7;
-    --amber-flash: rgba(232, 163, 61, 0.3);
-    --ink: #1A2B2E;
-    --muted: #7A8A8D;
-    --rule: #E6EBEB;
+    /* marks - fills, borders, bars, dots. Never carry text. */
+    --teal:        #1A9E8F;
+    --amber:       #E8A33D;
+    --bar:         #4F6B6E;
+    --bar-track:   #EDF1F1;
+
+    /* text */
+    --ink:         #1A2B2E;   /* 14.7:1 */
+    --muted:       #66787B;   /*  4.6:1 */
+    --teal-ink:    #0F6B60;   /*  6.4:1 */
+    --amber-ink:   #8C5B0F;   /*  5.8:1 */
+
+    /* surfaces */
+    --page:        #FFFFFF;
+    --teal-wash:   rgba(26, 158, 143, 0.05);
+    --teal-flash:  rgba(26, 158, 143, 0.20);
+    --amber-wash:  #FDF5E7;
+    --amber-flash: rgba(232, 163, 61, 0.28);
+    --card:        #FCFDFD;
+    --rule:        #E6EBEB;
+    --rule-soft:   #F0F4F4;
   }
 
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
-    background: #fff;
+    background: var(--page);
     color: var(--ink);
+    /* One typeface throughout. Numbers align with tabular figures rather than
+       by switching to a second, monospaced family. */
     font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
-  .page { max-width: 1120px; margin: 0 auto; padding: 56px 28px 96px; }
+  .num { font-variant-numeric: tabular-nums; }
 
-  header { margin-bottom: 52px; }
-  h1 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
-  .tagline { margin: 6px 0 0; color: var(--muted); font-size: 16px; }
-
-  .tally {
-    margin-top: 30px;
+  /* ------------------------------------------------------------------ topbar */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
     display: flex;
-    align-items: baseline;
-    gap: 14px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
     flex-wrap: wrap;
-    font-size: 16px;
+    padding: 16px 28px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
   }
-  .tally b { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
-  .tally .handled b { color: var(--teal); }
-  .tally .waiting b { color: var(--amber); }
-  .tally .dot-sep { color: var(--rule); }
+  .brand { display: flex; align-items: baseline; gap: 11px; }
+  .brand strong { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .brand span { color: var(--muted); font-size: 13px; }
 
-  .heartbeat {
-    margin-top: 16px;
+  .agent-status {
     display: flex;
     align-items: center;
     gap: 9px;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12.5px;
   }
   .pulse {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--teal);
+    flex: 0 0 auto;
     animation: pulse 2.4s ease-in-out infinite;
   }
   @keyframes pulse {
-    0%, 100% { opacity: 0.25; transform: scale(1); }
-    50%      { opacity: 1;    transform: scale(1.25); }
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.3); }
   }
-
-  main {
-    display: grid;
-    grid-template-columns: 1.65fr 1fr;
-    gap: 44px;
-    align-items: start;
-  }
-
-  h2 {
-    margin: 0 0 4px;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-  }
-  .col-handled h2 { color: var(--teal); }
-  .col-waiting h2 { color: var(--amber); }
-  .col > .accent { height: 2px; margin-bottom: 22px; }
-  .col-handled .accent { background: var(--teal); }
-  .col-waiting .accent { background: var(--amber); }
-  .col-note { margin: 0 0 22px; color: var(--muted); font-size: 13px; }
-
-  .rows { display: flex; flex-direction: column; gap: 7px; }
-
-  .row {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    padding: 13px 16px;
-    border-left: 3px solid var(--teal);
-    background: var(--teal-wash);
-    border-radius: 0 4px 4px 0;
-  }
-  .row .kind {
-    flex: 0 0 82px;
-    color: var(--teal);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-  }
-  .row .detail { flex: 1; min-width: 0; }
-  .row .when {
-    flex: 0 0 auto;
+  .chip {
+    padding: 3px 9px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11.5px;
+  }
+
+  /* -------------------------------------------------------------------- page */
+  .page { max-width: 1240px; margin: 0 auto; padding: 44px 28px 104px; }
+
+  .lede { margin: 0 0 30px; font-size: 21px; letter-spacing: -0.015em; }
+
+  /* ----------------------------------------------------------------- kpi row */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 46px;
+  }
+  .kpi {
+    padding: 18px 20px;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--rule);
+    border-radius: 0 5px 5px 0;
+    background: var(--card);
+  }
+  .kpi b {
+    display: block;
+    font-size: 38px;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
   }
+  .kpi small {
+    display: block;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .kpi.is-teal  { border-left-color: var(--teal); background: var(--teal-wash); }
+  .kpi.is-teal b { color: var(--teal-ink); }
+  /* Amber only ever means "a person is needed". At zero this tile is neutral. */
+  .kpi.is-amber { border-left-color: var(--amber); background: var(--amber-wash); }
+  .kpi.is-amber b { color: var(--amber-ink); }
 
-  /* In-flight asks are still inside their window, so nothing has happened yet.
-     Grey, because grey is neither done nor waiting on a human. */
-  .inflight {
+  /* -------------------------------------------------------------------- grid */
+  main { display: grid; grid-template-columns: 1.62fr 1fr; gap: 40px; align-items: start; }
+
+  .h2 {
     display: flex;
     align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .h2 em { font-style: normal; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 12.5px; color: var(--muted); }
+  .accent { height: 2px; margin-bottom: 8px; background: var(--rule); }
+  .teal-head .h2 { color: var(--teal-ink); }
+  .teal-head .accent { background: var(--teal); }
+  .amber-head .h2 { color: var(--amber-ink); }
+  .amber-head .accent { background: var(--amber); }
+  .sub { margin: 0 0 20px; color: var(--muted); font-size: 12.5px; }
+
+  .block { margin-bottom: 46px; }
+
+  /* ------------------------------------------------------------- shift cards */
+  .shift {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 6px 6px 0;
+    background: var(--card);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .shift-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 14px;
-    padding: 13px 16px;
-    margin-bottom: 7px;
-    border-left: 3px solid var(--rule);
-    border-radius: 0 4px 4px 0;
-    background: #FAFBFB;
+    padding: 16px 18px 13px;
+  }
+  .shift-title { font-size: 15.5px; font-weight: 600; }
+  .shift-meta { margin-top: 4px; color: var(--muted); font-size: 12.5px; }
+  .tag {
+    flex: 0 0 auto;
+    padding: 4px 9px;
+    border-radius: 3px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+  }
+  .tag-working { background: var(--bar-track); color: var(--muted); }
+  .tag-covered { background: rgba(26, 158, 143, 0.13); color: var(--teal-ink); }
+  .cert {
+    display: inline-block;
+    margin-left: 7px;
+    padding: 1px 6px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    font-size: 11px;
     color: var(--muted);
   }
-  .inflight .kind {
-    flex: 0 0 82px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-  }
-  .inflight .detail { flex: 1; min-width: 0; }
-  .inflight .clock { font-variant-numeric: tabular-nums; font-size: 12px; }
 
-  .card {
-    padding: 20px;
+  /* The ask chain: the agent's trail down the roster, one person at a time. */
+  .chain { border-top: 1px solid var(--rule-soft); }
+  .link {
+    display: flex;
+    align-items: baseline;
+    gap: 11px;
+    padding: 10px 18px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .link:last-child { border-bottom: 0; }
+  .link .glyph { flex: 0 0 14px; text-align: center; font-size: 12px; }
+  .link .who { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .link .verdict { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+  .link .when { flex: 0 0 auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+  .link.is-accepted .glyph { color: var(--teal-ink); }
+  .link.is-accepted .who   { font-weight: 600; }
+  .link.is-pending  { background: #FAFBFB; }
+  .link.is-pending  .glyph { color: var(--bar); animation: pulse 1.8s ease-in-out infinite; }
+  .link.is-pending  .when  { color: var(--ink); font-weight: 600; }
+  .link.is-declined .who, .link.is-timeout .who, .link.is-superseded .who { color: var(--muted); }
+  .link.is-superseded { opacity: 0.72; }
+
+  /* Asks used, out of the hard limit. A meter, not a decoration. */
+  .meter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 11px 18px;
+    border-top: 1px solid var(--rule-soft);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .meter { display: flex; gap: 2px; }        /* 2px surface gap between fills */
+  .meter i {
+    display: block;
+    width: 20px; height: 5px;
+    border-radius: 1px;
+    background: var(--bar-track);
+  }
+  .meter i.on { background: var(--bar); }
+
+  /* ---------------------------------------------------------- escalation card */
+  .esc {
+    border: 1px solid var(--amber);
     border-left: 3px solid var(--amber);
+    border-radius: 0 6px 6px 0;
     background: var(--amber-wash);
-    border-radius: 0 5px 5px 0;
+    padding: 19px 20px;
     margin-bottom: 14px;
   }
-  .card .reason {
-    color: var(--amber);
-    font-size: 11px;
+  .esc .reason {
+    font-size: 10.5px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.08em;
+    color: var(--amber-ink);
   }
-  .card .what { margin: 9px 0 0; font-weight: 600; }
-  .card .detail { margin: 7px 0 0; }
-  .card .when { margin-top: 12px; color: var(--muted); font-size: 12px; }
-  .card button {
+  .esc .what { margin: 9px 0 2px; font-size: 15.5px; font-weight: 600; }
+  .esc .meta { color: var(--muted); font-size: 12.5px; }
+  .esc .detail { margin: 12px 0 0; font-size: 13.5px; }
+  .esc .already {
+    margin-top: 13px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(232, 163, 61, 0.35);
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .esc button {
     margin-top: 16px;
-    padding: 8px 15px;
+    width: 100%;
+    padding: 10px 14px;
     font: inherit;
-    font-size: 13px;
-    color: var(--ink);
-    background: #fff;
-    border: 1px solid var(--amber);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--amber-ink);
+    border: 0;
     border-radius: 4px;
     cursor: pointer;
   }
-  .card button:hover { background: var(--amber); color: #fff; }
+  .esc button:hover { background: #6F480B; }
+  .esc button:disabled { opacity: 0.5; cursor: default; }
+  .esc .when { margin-top: 11px; color: var(--muted); font-size: 12px; text-align: center; }
 
-  .empty { padding: 18px 0; color: var(--muted); font-size: 14px; }
+  /* The default state of this column, and it should feel like a result. */
+  .quiet {
+    padding: 22px 20px;
+    border: 1px dashed var(--rule);
+    border-radius: 5px;
+    background: var(--teal-wash);
+  }
+  .quiet b { display: block; color: var(--teal-ink); font-size: 14.5px; }
+  .quiet span { display: block; margin-top: 5px; color: var(--muted); font-size: 12.5px; }
 
-  /* A screen recording has to show something happening without a click. */
-  .row.enter  { animation: enter-teal 1.1s ease-out; }
-  .card.enter { animation: enter-amber 1.1s ease-out; }
+  /* ------------------------------------------------------------- fairness bars */
+  .fair-group {
+    margin: 0 0 11px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .fair-group.second { margin-top: 24px; padding-top: 19px; border-top: 1px solid var(--rule-soft); }
+  .fair-row { margin-bottom: 13px; }
+  .fair-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .fair-head .who { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fair-head .val { flex: 0 0 auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .fair-head .flag {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--teal-ink);
+    font-size: 11px;
+  }
+  .fair-head .flag i { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+  .track { height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; }
+  .fill {
+    height: 100%;
+    border-radius: 0 4px 4px 0;     /* 4px rounded data-end, anchored at zero */
+    background: var(--bar);
+    transition: width 0.5s ease-out;
+  }
+  .footnote { margin: 16px 0 0; color: var(--muted); font-size: 12px; }
+
+  /* ------------------------------------------------------------------ week dots */
+  .dots { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--bar-track); }
+  .dot.filled { background: var(--teal); }
+  .dot.open { background: var(--bar-track); border: 1.5px solid var(--bar); }
+  .dot.escalated { background: var(--amber); }
+  .legend { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* --------------------------------------------------------------- policy list */
+  .policy { margin: 0; font-size: 12.5px; }
+  .policy div {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .policy div:last-child { border-bottom: 0; }
+  .policy dt { color: var(--muted); }
+  .policy dd { margin: 0; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* ----------------------------------------------------------------- audit log */
+  .audit { border-top: 1px solid var(--rule); }
+  .entry {
+    display: flex;
+    align-items: baseline;
+    gap: 13px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 13px;
+  }
+  .entry .kind {
+    flex: 0 0 74px;
+    color: var(--teal-ink);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .entry .detail { flex: 1 1 auto; min-width: 0; }
+  .entry .when { flex: 0 0 auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+  .empty { padding: 20px 0; color: var(--muted); font-size: 13.5px; }
+
+  /* ---------------------------------------------------------------- animation */
+  .enter-teal  { animation: enter-teal 1.1s ease-out; }
+  .enter-amber { animation: enter-amber 1.1s ease-out; }
   @keyframes enter-teal {
     from { opacity: 0; transform: translateY(-7px); background: var(--teal-flash); }
-    to   { opacity: 1; transform: none;             background: var(--teal-wash); }
+    to   { opacity: 1; transform: none; }
   }
   @keyframes enter-amber {
     from { opacity: 0; transform: translateY(-7px); background: var(--amber-flash); }
-    to   { opacity: 1; transform: none;             background: var(--amber-wash); }
+    to   { opacity: 1; transform: none; }
   }
 
-  footer { margin-top: 72px; color: var(--muted); font-size: 12px; }
+  /* ------------------------------------------------------------------ tooltip */
+  #tip {
+    position: fixed;
+    z-index: 60;
+    max-width: 240px;
+    padding: 8px 11px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  #tip.on { opacity: 1; }
 
-  @media (max-width: 860px) {
+  footer { margin-top: 76px; padding-top: 20px; border-top: 1px solid var(--rule);
+           color: var(--muted); font-size: 12px; }
+
+  @media (max-width: 940px) {
     main { grid-template-columns: 1fr; gap: 46px; }
-    .page { padding: 36px 20px 72px; }
+    .page { padding: 32px 18px 80px; }
+    .topbar { padding: 14px 18px; }
+    .lede { font-size: 18px; }
+    .kpi b { font-size: 32px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .row.enter, .card.enter, .pulse { animation: none; }
+    .enter-teal, .enter-amber, .pulse, .link.is-pending .glyph { animation: none; }
+    .fill { transition: none; }
   }
 </style>
 </head>
 <body>
+
+<div class="topbar">
+  <div class="brand">
+    <strong>Fill In</strong>
+    <span>Community Kitchen, Main St</span>
+  </div>
+  <div class="agent-status">
+    <span class="pulse"></span>
+    <span id="tick-text">waiting for the first tick</span>
+    <span class="chip" id="model-chip">no model configured</span>
+  </div>
+</div>
+
 <div class="page">
-  <header>
-    <h1>Fill In</h1>
-    <p class="tagline">Nobody phones down the list any more.</p>
+  <p class="lede">Nobody phones down the list any more.</p>
 
-    <div class="tally">
-      <span class="handled"><b id="n-handled">0</b> decisions handled</span>
-      <span class="dot-sep">&middot;</span>
-      <span class="waiting"><b id="n-waiting">0</b> waiting for you</span>
+  <div class="kpis">
+    <div class="kpi is-teal">
+      <b id="kpi-handled">0</b>
+      <small>decisions handled without you</small>
     </div>
-
-    <div class="heartbeat">
-      <span class="pulse"></span>
-      <span id="heartbeat-text">waiting for the first tick</span>
+    <div class="kpi is-teal">
+      <b id="kpi-covered">0</b>
+      <small>shifts covered start to finish</small>
     </div>
-  </header>
+    <div class="kpi" id="kpi-waiting-tile">
+      <b id="kpi-waiting">0</b>
+      <small>waiting for you</small>
+    </div>
+  </div>
 
   <main>
-    <section class="col col-handled">
-      <h2>Handled without you</h2>
-      <div class="accent"></div>
-      <p class="col-note" id="handled-note"></p>
-      <div id="inflight"></div>
-      <div class="rows" id="rows"></div>
-    </section>
+    <!-- ============================ left: the agent's work ============================ -->
+    <div>
+      <section class="block teal-head">
+        <h2 class="h2">Handled without you <em id="shift-count"></em></h2>
+        <div class="accent"></div>
+        <p class="sub" id="handled-sub"></p>
+        <div id="shifts"></div>
+      </section>
 
-    <section class="col col-waiting">
-      <h2>Waiting for you</h2>
-      <div class="accent"></div>
-      <p class="col-note">A real decision, with the context to make it.</p>
-      <div id="escalations"></div>
-    </section>
+      <section class="block">
+        <h2 class="h2">Audit log <em id="audit-count"></em></h2>
+        <div class="accent"></div>
+        <p class="sub">Every autonomous action, in the order it happened.</p>
+        <div class="audit" id="audit"></div>
+      </section>
+    </div>
+
+    <!-- ============================ right: the human's column ======================== -->
+    <div>
+      <section class="block amber-head">
+        <h2 class="h2">Waiting for you</h2>
+        <div class="accent"></div>
+        <p class="sub">A real decision, with the context to make it.</p>
+        <div id="escalations"></div>
+      </section>
+
+      <section class="block teal-head">
+        <h2 class="h2">Fairness</h2>
+        <div class="accent"></div>
+        <p class="sub">Shifts worked in the last 30 days, on one scale. The agent
+          ranks the top group last &mdash; on purpose.</p>
+        <div id="fairness"></div>
+        <p class="footnote" id="protected-note"></p>
+      </section>
+
+      <section class="block teal-head">
+        <h2 class="h2">The roster this week</h2>
+        <div class="accent"></div>
+        <div class="dots" id="week"></div>
+        <div class="legend" id="week-legend"></div>
+      </section>
+
+      <section class="block teal-head">
+        <h2 class="h2">Policy</h2>
+        <div class="accent"></div>
+        <p class="sub">Enforced in tool code, not in the prompt.</p>
+        <dl class="policy" id="policy"></dl>
+      </section>
+    </div>
   </main>
 
   <footer>
-    Synthetic volunteers and shifts, generated by <code>data/seed.py</code>.
+    Volunteers, shifts and availability are synthetic, generated by
+    <code>data/seed.py</code>. The agent runs from <code>run_tick.py</code>;
+    this page only reads what it did.
   </footer>
 </div>
 
+<div id="tip" role="tooltip"></div>
+
 <script>
 const POLL_MS = 2500;
-const seenRows = new Set();
-const seenCards = new Set();
-let firstPaint = true;    // do not animate the whole backlog on page load
-let inflight = [];
 
+const seen = { audit: new Set(), esc: new Set(), shift: new Set() };
+let firstPaint = true;     // never animate the whole backlog on load
+let pending = [];          // asks whose countdown runs between polls
+
+/* Build every node with textContent. Some of this text is written by the model,
+   so it is data, never markup. */
 function el(tag, cls, text) {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
-  if (text !== undefined) node.textContent = text;  // never innerHTML: some of
-  return node;                                      // this text is model-written
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function mmss(s) {
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 }
 
-function mmss(seconds) {
-  const m = Math.floor(seconds / 60), s = seconds % 60;
-  return m + ":" + String(s).padStart(2, "0");
+/* ------------------------------------------------------------------- tooltip */
+const tip = document.getElementById("tip");
+function tipOn(target, text) {
+  target.addEventListener("mouseenter", () => {
+    tip.textContent = text;
+    tip.classList.add("on");
+    const r = target.getBoundingClientRect();
+    tip.style.left = Math.min(r.left, window.innerWidth - 260) + "px";
+    tip.style.top = Math.max(8, r.top - tip.offsetHeight - 9) + "px";
+  });
+  target.addEventListener("mouseleave", () => tip.classList.remove("on"));
 }
 
-function renderHandled(items) {
-  const host = document.getElementById("rows");
+/* ---------------------------------------------------------------- ask chains */
+const GLYPH = {
+  accepted:   ["✓", "accepted"],
+  declined:   ["✕", "declined"],
+  timeout:    ["○", "no answer"],
+  pending:    ["◐", "deciding"],
+  superseded: ["–", "released"],
+};
+
+function chainRows(host, asks) {
+  for (const ask of asks) {
+    const [glyph, verdict] = GLYPH[ask.status] || ["·", ask.status];
+    const row = el("div", "link is-" + ask.status);
+    row.appendChild(el("span", "glyph", glyph));
+    row.appendChild(el("span", "who", ask.name));
+    row.appendChild(el("span", "verdict", verdict));
+
+    const when = el("span", "when",
+      ask.status === "pending" ? mmss(ask.seconds_left) + " left" : ask.ago);
+    if (ask.status === "pending") when.dataset.countdown = String(ask.seconds_left);
+    row.appendChild(when);
+    host.appendChild(row);
+  }
+}
+
+function renderShifts(shifts, policy) {
+  const host = document.getElementById("shifts");
+  host.textContent = "";
+  document.getElementById("shift-count").textContent =
+    shifts.length ? shifts.length + (shifts.length === 1 ? " shift" : " shifts") : "";
+
+  if (!shifts.length) {
+    host.appendChild(el("p", "empty",
+      "No open shifts and nothing in flight. Cancel one and the agent picks it up on its next wake-up."));
+    return;
+  }
+
+  for (const shift of shifts) {
+    const card = el("div", "shift");
+    if (!firstPaint && !seen.shift.has(shift.id)) card.classList.add("enter-teal");
+    seen.shift.add(shift.id);
+
+    const top = el("div", "shift-top");
+    const left = el("div");
+    left.appendChild(el("div", "shift-title", shift.role));
+
+    const meta = el("div", "shift-meta");
+    meta.appendChild(el("span", null, shift.starts_in));
+    if (shift.assigned_name) {
+      meta.appendChild(el("span", null, " · " + shift.assigned_name + " covers this"));
+    } else if (shift.waiting_on) {
+      meta.appendChild(el("span", null, " · waiting on " + shift.waiting_on));
+    }
+    if (shift.required_cert) meta.appendChild(el("span", "cert", shift.required_cert));
+    left.appendChild(meta);
+    top.appendChild(left);
+
+    const covered = shift.status === "filled";
+    top.appendChild(el("span", "tag " + (covered ? "tag-covered" : "tag-working"),
+                       covered ? "covered" : "in progress"));
+    card.appendChild(top);
+
+    if (shift.asks.length) {
+      const chain = el("div", "chain");
+      chainRows(chain, shift.asks);
+      card.appendChild(chain);
+
+      const meterRow = el("div", "meter-row");
+      meterRow.appendChild(el("span", null,
+        shift.asks_used + " of " + policy.max_asks + " asks used" +
+        (covered ? "" : " · " + shift.asks_remaining + " before a human is needed")));
+      const meter = el("div", "meter");
+      for (let i = 0; i < policy.max_asks; i++) {
+        meter.appendChild(el("i", i < shift.asks_used ? "on" : null));
+      }
+      tipOn(meter, "The ask limit is enforced in send_ask(), not in the prompt. " +
+                   "Ask " + (policy.max_asks + 1) + " is refused.");
+      meterRow.appendChild(meter);
+      card.appendChild(meterRow);
+    }
+    host.appendChild(card);
+  }
+}
+
+/* ---------------------------------------------------------------- escalations */
+function renderEscalations(items) {
+  const host = document.getElementById("escalations");
   host.textContent = "";
 
   if (!items.length) {
-    host.appendChild(el("p", "empty", "Nothing yet. Cancel a shift, then wait."));
+    const quiet = el("div", "quiet");
+    quiet.appendChild(el("b", null, "✓  Nothing needs you."));
+    quiet.appendChild(el("span", null, "That is the default state, not an empty screen."));
+    host.appendChild(quiet);
     return;
   }
 
   for (const item of items) {
-    const row = el("div", "row");
-    if (!firstPaint && !seenRows.has(item.id)) row.classList.add("enter");
-    seenRows.add(item.id);
+    const card = el("div", "esc");
+    if (!firstPaint && !seen.esc.has(item.id)) card.classList.add("enter-amber");
+    seen.esc.add(item.id);
 
+    card.appendChild(el("div", "reason", item.reason));
+    card.appendChild(el("p", "what", item.role || ("Shift " + item.shift_id)));
+
+    const meta = el("div", "meta");
+    meta.appendChild(el("span", null, item.starts_in || ("shift " + item.shift_id)));
+    if (item.required_cert) meta.appendChild(el("span", "cert", item.required_cert));
+    card.appendChild(meta);
+
+    card.appendChild(el("p", "detail", item.detail));
+
+    const already = el("div", "already");
+    already.textContent = item.asks.length
+      ? "Already contacted: " + item.asks.map(a => a.name + " (" + a.status + ")").join(", ")
+      : "Nobody has been contacted about this shift.";
+    card.appendChild(already);
+
+    const button = el("button", null, "I have handled this");
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        const res = await fetch("/api/escalations/" + item.id + "/resolve", { method: "POST" });
+        if (res.ok) paint(await res.json()); else button.disabled = false;
+      } catch (err) { button.disabled = false; }
+    });
+    card.appendChild(button);
+    card.appendChild(el("div", "when", "raised " + item.ago));
+    host.appendChild(card);
+  }
+}
+
+/* ------------------------------------------------------------------ fairness */
+function fairGroup(host, label, people, peak, second) {
+  host.appendChild(el("div", "fair-group" + (second ? " second" : ""), label));
+
+  for (const person of people) {
+    const row = el("div", "fair-row");
+    const head = el("div", "fair-head");
+    head.appendChild(el("span", "who", person.name));
+    if (person.protected) {
+      const flag = el("span", "flag");
+      flag.appendChild(el("i"));
+      flag.appendChild(el("span", null, "protected"));
+      head.appendChild(flag);
+    }
+    head.appendChild(el("span", "val", person.shifts));
+    row.appendChild(head);
+
+    const track = el("div", "track");
+    const fill = el("div", "fill");
+    fill.style.width = Math.round((person.shifts / peak) * 100) + "%";
+    track.appendChild(fill);
+    row.appendChild(track);
+
+    tipOn(row, person.name + " — " + person.shifts + " shifts and " + person.asks +
+               " asks in the last 30 days, " + person.response_rate + "% reply rate." +
+               (person.protected ? " Pushed to the back of the queue." : ""));
+    host.appendChild(row);
+  }
+}
+
+function renderFairness(roster) {
+  const host = document.getElementById("fairness");
+  host.textContent = "";
+
+  // Both groups share one scale, so the bar lengths are actually comparable.
+  fairGroup(host, "Carrying the most", roster.heaviest, roster.peak, false);
+  fairGroup(host, "Asked instead", roster.lightest, roster.peak, true);
+
+  document.getElementById("protected-note").textContent =
+    roster.protected + " of " + roster.total + " volunteers have been asked " +
+    roster.threshold + "+ times in 30 days, so the agent moves them to the back " +
+    "of the queue whatever their availability says.";
+}
+
+/* ---------------------------------------------------------------- week roster */
+function renderWeek(week) {
+  const host = document.getElementById("week");
+  host.textContent = "";
+  for (const dot of week.dots) {
+    const node = el("span", "dot " + dot.status);
+    tipOn(node, dot.label + " — " + dot.status);
+    host.appendChild(node);
+  }
+
+  const legend = document.getElementById("week-legend");
+  legend.textContent = "";
+  const parts = [
+    ["filled", week.counts.filled || 0, "covered"],
+    ["open", week.counts.open || 0, "open"],
+    ["escalated", week.counts.escalated || 0, "needs you"],
+  ];
+  for (const [cls, count, label] of parts) {
+    const item = el("span");
+    item.appendChild(el("i", "dot " + cls));
+    item.appendChild(el("span", null, count + " " + label));
+    legend.appendChild(item);
+  }
+}
+
+/* -------------------------------------------------------------------- policy */
+function renderPolicy(policy) {
+  const host = document.getElementById("policy");
+  host.textContent = "";
+  const rows = [
+    ["People asked at once", "1"],
+    ["Time to reply", policy.window_minutes + " min"],
+    ["Asks before a human", policy.max_asks],
+    ["Never inside", policy.urgent_hours + " h of the shift"],
+    ["Back of the queue after", policy.fatigue_asks + " asks / 30 d"],
+  ];
+  for (const [term, value] of rows) {
+    const line = el("div");
+    line.appendChild(el("dt", null, term));
+    line.appendChild(el("dd", null, String(value)));
+    host.appendChild(line);
+  }
+}
+
+/* ----------------------------------------------------------------- audit log */
+function renderAudit(items) {
+  const host = document.getElementById("audit");
+  host.textContent = "";
+  document.getElementById("audit-count").textContent =
+    items.length ? items.length + " most recent" : "";
+
+  if (!items.length) {
+    host.appendChild(el("p", "empty", "Nothing logged yet."));
+    return;
+  }
+  for (const item of items) {
+    const row = el("div", "entry");
+    if (!firstPaint && !seen.audit.has(item.id)) row.classList.add("enter-teal");
+    seen.audit.add(item.id);
     row.appendChild(el("span", "kind", item.kind));
     row.appendChild(el("span", "detail", item.detail));
     row.appendChild(el("span", "when", item.ago));
@@ -274,68 +788,35 @@ function renderHandled(items) {
   }
 }
 
-function renderInflight() {
-  const host = document.getElementById("inflight");
-  host.textContent = "";
-
-  for (const ask of inflight) {
-    const row = el("div", "inflight");
-    row.appendChild(el("span", "kind", "waiting"));
-    row.appendChild(el("span", "detail",
-      ask.name + " has the " + ask.role.toLowerCase() + " shift to consider"));
-    row.appendChild(el("span", "clock",
-      ask.seconds_left > 0 ? mmss(ask.seconds_left) + " left" : "window closed"));
-    host.appendChild(row);
-  }
-}
-
-function renderEscalations(items) {
-  const host = document.getElementById("escalations");
-  host.textContent = "";
-
-  if (!items.length) {
-    host.appendChild(el("p", "empty", "Nothing. That is the point."));
-    return;
-  }
-
-  for (const item of items) {
-    const card = el("div", "card");
-    if (!firstPaint && !seenCards.has(item.id)) card.classList.add("enter");
-    seenCards.add(item.id);
-
-    card.appendChild(el("div", "reason", item.reason));
-    card.appendChild(el("p", "what",
-      "Shift " + item.shift_id + " — " + (item.role || "unknown role")));
-    card.appendChild(el("p", "detail", item.detail));
-    card.appendChild(el("div", "when", item.ago));
-
-    const button = el("button", null, "I have handled this");
-    button.addEventListener("click", async () => {
-      button.disabled = true;
-      const res = await fetch("/api/escalations/" + item.id + "/resolve",
-                              { method: "POST" });
-      if (res.ok) paint(await res.json());
-      else button.disabled = false;
-    });
-    card.appendChild(button);
-    host.appendChild(card);
-  }
-}
-
+/* --------------------------------------------------------------------- paint */
 function paint(state) {
-  document.getElementById("n-handled").textContent = state.counts.handled;
-  document.getElementById("n-waiting").textContent = state.counts.waiting;
-  document.getElementById("heartbeat-text").textContent =
-    state.last_tick ? "agent last woke " + state.last_tick
-                    : "waiting for the first tick";
-  document.getElementById("handled-note").textContent =
-    "One person asked at a time. " + state.policy.window_minutes +
-    " minutes to reply, " + state.policy.max_asks + " asks before a human is needed.";
+  document.getElementById("kpi-handled").textContent = state.kpi.handled;
+  document.getElementById("kpi-covered").textContent = state.kpi.covered;
+  document.getElementById("kpi-waiting").textContent = state.kpi.waiting;
+  // The amber tile only turns amber when a person is actually needed.
+  document.getElementById("kpi-waiting-tile").className =
+    "kpi" + (state.kpi.waiting > 0 ? " is-amber" : "");
 
-  inflight = state.inflight;
-  renderInflight();
-  renderHandled(state.handled);
+  document.getElementById("tick-text").textContent =
+    state.agent.last_tick ? "agent last woke " + state.agent.last_tick
+                          : "waiting for the first tick";
+  const chip = document.getElementById("model-chip");
+  chip.textContent = state.agent.provider
+    ? state.agent.provider + " · " + state.agent.model
+    : "no model configured";
+
+  document.getElementById("handled-sub").textContent =
+    "One person asked at a time, " + state.policy.window_minutes +
+    " minutes to reply. The agent stops the moment a shift is covered.";
+
+  renderShifts(state.shifts, state.policy);
   renderEscalations(state.escalations);
+  renderFairness(state.roster);
+  renderWeek(state.week);
+  renderPolicy(state.policy);
+  renderAudit(state.audit);
+
+  pending = Array.from(document.querySelectorAll("[data-countdown]"));
   firstPaint = false;
 }
 
@@ -348,14 +829,14 @@ async function poll() {
   }
 }
 
-// Between polls, run the countdowns locally so the page is never frozen.
+// Between polls the response windows keep ticking, so the page is never frozen.
 setInterval(() => {
-  if (!inflight.length) return;
-  let changed = false;
-  for (const ask of inflight) {
-    if (ask.seconds_left > 0) { ask.seconds_left -= 1; changed = true; }
+  for (const node of pending) {
+    let left = Number(node.dataset.countdown) - 1;
+    if (left < 0) left = 0;
+    node.dataset.countdown = String(left);
+    node.textContent = left > 0 ? mmss(left) + " left" : "window closed";
   }
-  if (changed) renderInflight();
 }, 1000);
 
 poll();
