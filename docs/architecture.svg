@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+     role="img" aria-labelledby="title desc">
+  <title id="title">Fill In - architecture</title>
+  <desc id="desc">A scheduler wakes a Strands agent, which acts only through six tools that
+    read and write a SQLite database. Volunteers are asked one at a time. One arrow, drawn in
+    amber, is the only path that interrupts the coordinator for a decision.</desc>
+
+  <defs>
+    <marker id="head-teal" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1A9E8F"/>
+    </marker>
+    <marker id="head-amber" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#E8A33D"/>
+    </marker>
+    <marker id="head-grey" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9AA9AC"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="660" fill="#FFFFFF"/>
+
+  <text x="40" y="36" font-size="17" font-weight="600" fill="#1A2B2E">Fill In &#8212; architecture</text>
+
+  <!-- ============================== scheduler ============================== -->
+  <rect x="40" y="70" width="190" height="84" rx="6" fill="#FFFFFF" stroke="#D9E0E0" stroke-width="1.5"/>
+  <text x="60" y="97" font-size="10" font-weight="600" letter-spacing="1.1" fill="#1A9E8F">SCHEDULER</text>
+  <text x="60" y="120" font-size="13.5" fill="#1A2B2E" font-family="ui-monospace, SFMono-Regular, Consolas, monospace">run_tick.py</text>
+  <text x="60" y="140" font-size="11" fill="#7A8A8D">EventBridge &#8594; Lambda in prod</text>
+
+  <!-- ================================ agent ================================ -->
+  <rect x="290" y="70" width="210" height="84" rx="6" fill="#FFFFFF" stroke="#D9E0E0" stroke-width="1.5"/>
+  <text x="310" y="97" font-size="10" font-weight="600" letter-spacing="1.1" fill="#1A9E8F">AGENT</text>
+  <text x="310" y="120" font-size="13.5" fill="#1A2B2E">Strands Agent + Claude</text>
+  <text x="310" y="140" font-size="11" fill="#7A8A8D">one step per wake-up, then stops</text>
+
+  <!-- ================================ tools ================================ -->
+  <rect x="560" y="52" width="360" height="268" rx="6" fill="#FFFFFF" stroke="#1A9E8F" stroke-width="1.5"/>
+  <text x="580" y="78" font-size="10" font-weight="600" letter-spacing="1.1" fill="#1A9E8F">TOOLS</text>
+  <text x="626" y="78" font-size="11" fill="#7A8A8D" font-family="ui-monospace, SFMono-Regular, Consolas, monospace">agent/tools.py</text>
+  <line x1="580" y1="92" x2="900" y2="92" stroke="#E6EBEB" stroke-width="1"/>
+
+  <g font-size="12" fill="#1A2B2E" font-family="ui-monospace, SFMono-Regular, Consolas, monospace">
+    <text x="580" y="118">get_shift</text>
+    <text x="580" y="144">rank_candidates</text>
+    <text x="580" y="170">send_ask</text>
+    <text x="580" y="196">check_replies</text>
+    <text x="580" y="222">confirm_and_book</text>
+    <text x="580" y="248" fill="#E8A33D">escalate_to_human</text>
+  </g>
+  <g font-size="10.5" fill="#7A8A8D">
+    <text x="742" y="144">fairness first</text>
+    <text x="742" y="170">one at a time, 5 max</text>
+    <text x="742" y="196">20-minute window</text>
+    <text x="742" y="222">no double-booking</text>
+    <text x="742" y="248" fill="#E8A33D">the only way out</text>
+  </g>
+
+  <text x="580" y="284" font-size="11" fill="#7A8A8D">Every hard rule is a return statement in here,</text>
+  <text x="580" y="300" font-size="11" fill="#7A8A8D">not a sentence in the prompt.</text>
+
+  <!-- ================================ state ================================ -->
+  <rect x="560" y="360" width="360" height="84" rx="6" fill="#FFFFFF" stroke="#D9E0E0" stroke-width="1.5"/>
+  <text x="580" y="387" font-size="10" font-weight="600" letter-spacing="1.1" fill="#1A9E8F">STATE</text>
+  <text x="580" y="410" font-size="13.5" fill="#1A2B2E" font-family="ui-monospace, SFMono-Regular, Consolas, monospace">data/fillin.db</text>
+  <text x="580" y="430" font-size="11" fill="#7A8A8D">volunteers &#183; shifts &#183; asks &#183; escalations &#183; events</text>
+
+  <!-- ============================== volunteer ============================== -->
+  <rect x="40" y="360" width="230" height="84" rx="6" fill="#FFFFFF" stroke="#1A9E8F" stroke-width="1.5"/>
+  <text x="60" y="387" font-size="10" font-weight="600" letter-spacing="1.1" fill="#1A9E8F">ASKED, ONE AT A TIME</text>
+  <text x="60" y="410" font-size="13.5" fill="#1A2B2E">One volunteer</text>
+  <text x="60" y="430" font-size="11" fill="#7A8A8D">email or SMS; easy to decline</text>
+
+  <!-- ============================= coordinator ============================= -->
+  <rect x="40" y="496" width="310" height="96" rx="6" fill="#FDF5E7" stroke="#E8A33D" stroke-width="2.5"/>
+  <text x="62" y="524" font-size="10" font-weight="600" letter-spacing="1.1" fill="#E8A33D">WAITING FOR YOU</text>
+  <text x="62" y="548" font-size="14" font-weight="600" fill="#1A2B2E">The coordinator</text>
+  <text x="62" y="570" font-size="11" fill="#7A8A8D">interrupted only for a real decision</text>
+
+  <!-- ================================ arrows ================================ -->
+  <line x1="230" y1="112" x2="282" y2="112" stroke="#1A9E8F" stroke-width="1.5" marker-end="url(#head-teal)"/>
+  <text x="256" y="103" font-size="10.5" fill="#7A8A8D" text-anchor="middle"
+        font-family="ui-monospace, SFMono-Regular, Consolas, monospace">tick()</text>
+
+  <line x1="500" y1="112" x2="552" y2="112" stroke="#1A9E8F" stroke-width="1.5" marker-end="url(#head-teal)"/>
+  <text x="526" y="103" font-size="10.5" fill="#7A8A8D" text-anchor="middle">acts</text>
+
+  <line x1="726" y1="320" x2="726" y2="352" stroke="#9AA9AC" stroke-width="1.5" marker-end="url(#head-grey)"/>
+  <line x1="754" y1="352" x2="754" y2="320" stroke="#9AA9AC" stroke-width="1.5" marker-end="url(#head-grey)"/>
+  <text x="772" y="341" font-size="10.5" fill="#7A8A8D">read / write &#183; audit log</text>
+
+  <path d="M 556 170 C 440 182, 358 300, 278 384" fill="none"
+        stroke="#1A9E8F" stroke-width="1.5" marker-end="url(#head-teal)"/>
+  <text x="392" y="272" font-size="11" fill="#1A9E8F" text-anchor="middle"
+        font-family="ui-monospace, SFMono-Regular, Consolas, monospace">send_ask</text>
+
+  <!-- The point of the diagram. -->
+  <path d="M 556 250 C 476 306, 442 462, 358 528" fill="none"
+        stroke="#E8A33D" stroke-width="3" marker-end="url(#head-amber)"/>
+  <text x="470" y="404" font-size="11.5" font-weight="600" fill="#E8A33D"
+        font-family="ui-monospace, SFMono-Regular, Consolas, monospace">escalate_to_human</text>
+
+  <text x="40" y="618" font-size="11" fill="#7A8A8D">A missing certificate, an exhausted ask limit, a shift starting too soon &#8212; the tool returns a refusal, so the model cannot talk its way past it.</text>
+  <text x="40" y="638" font-size="11.5" font-weight="600" fill="#1A2B2E">Exactly one arrow above asks a person to decide.</text>
+</svg>

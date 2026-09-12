@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fill In</title>
+<style>
+  /* One typeface, white ground, near-black text. Teal is everything the agent
+     did alone. Amber is the one thing that needs a person, and it appears
+     nowhere else in this file. */
+  :root {
+    --teal: #1A9E8F;
+    --teal-wash: rgba(26, 158, 143, 0.055);
+    --teal-flash: rgba(26, 158, 143, 0.22);
+    --amber: #E8A33D;
+    --amber-wash: #FDF5E7;
+    --amber-flash: rgba(232, 163, 61, 0.3);
+    --ink: #1A2B2E;
+    --muted: #7A8A8D;
+    --rule: #E6EBEB;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #fff;
+    color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page { max-width: 1120px; margin: 0 auto; padding: 56px 28px 96px; }
+
+  header { margin-bottom: 52px; }
+  h1 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+  .tagline { margin: 6px 0 0; color: var(--muted); font-size: 16px; }
+
+  .tally {
+    margin-top: 30px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 16px;
+  }
+  .tally b { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+  .tally .handled b { color: var(--teal); }
+  .tally .waiting b { color: var(--amber); }
+  .tally .dot-sep { color: var(--rule); }
+
+  .heartbeat {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.25; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.25); }
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: 1.65fr 1fr;
+    gap: 44px;
+    align-items: start;
+  }
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+  }
+  .col-handled h2 { color: var(--teal); }
+  .col-waiting h2 { color: var(--amber); }
+  .col > .accent { height: 2px; margin-bottom: 22px; }
+  .col-handled .accent { background: var(--teal); }
+  .col-waiting .accent { background: var(--amber); }
+  .col-note { margin: 0 0 22px; color: var(--muted); font-size: 13px; }
+
+  .rows { display: flex; flex-direction: column; gap: 7px; }
+
+  .row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 13px 16px;
+    border-left: 3px solid var(--teal);
+    background: var(--teal-wash);
+    border-radius: 0 4px 4px 0;
+  }
+  .row .kind {
+    flex: 0 0 82px;
+    color: var(--teal);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .row .detail { flex: 1; min-width: 0; }
+  .row .when {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* In-flight asks are still inside their window, so nothing has happened yet.
+     Grey, because grey is neither done nor waiting on a human. */
+  .inflight {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 13px 16px;
+    margin-bottom: 7px;
+    border-left: 3px solid var(--rule);
+    border-radius: 0 4px 4px 0;
+    background: #FAFBFB;
+    color: var(--muted);
+  }
+  .inflight .kind {
+    flex: 0 0 82px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .inflight .detail { flex: 1; min-width: 0; }
+  .inflight .clock { font-variant-numeric: tabular-nums; font-size: 12px; }
+
+  .card {
+    padding: 20px;
+    border-left: 3px solid var(--amber);
+    background: var(--amber-wash);
+    border-radius: 0 5px 5px 0;
+    margin-bottom: 14px;
+  }
+  .card .reason {
+    color: var(--amber);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .card .what { margin: 9px 0 0; font-weight: 600; }
+  .card .detail { margin: 7px 0 0; }
+  .card .when { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  .card button {
+    margin-top: 16px;
+    padding: 8px 15px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--amber);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .card button:hover { background: var(--amber); color: #fff; }
+
+  .empty { padding: 18px 0; color: var(--muted); font-size: 14px; }
+
+  /* A screen recording has to show something happening without a click. */
+  .row.enter  { animation: enter-teal 1.1s ease-out; }
+  .card.enter { animation: enter-amber 1.1s ease-out; }
+  @keyframes enter-teal {
+    from { opacity: 0; transform: translateY(-7px); background: var(--teal-flash); }
+    to   { opacity: 1; transform: none;             background: var(--teal-wash); }
+  }
+  @keyframes enter-amber {
+    from { opacity: 0; transform: translateY(-7px); background: var(--amber-flash); }
+    to   { opacity: 1; transform: none;             background: var(--amber-wash); }
+  }
+
+  footer { margin-top: 72px; color: var(--muted); font-size: 12px; }
+
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; gap: 46px; }
+    .page { padding: 36px 20px 72px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .row.enter, .card.enter, .pulse { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Fill In</h1>
+    <p class="tagline">Nobody phones down the list any more.</p>
+
+    <div class="tally">
+      <span class="handled"><b id="n-handled">0</b> decisions handled</span>
+      <span class="dot-sep">&middot;</span>
+      <span class="waiting"><b id="n-waiting">0</b> waiting for you</span>
+    </div>
+
+    <div class="heartbeat">
+      <span class="pulse"></span>
+      <span id="heartbeat-text">waiting for the first tick</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="col col-handled">
+      <h2>Handled without you</h2>
+      <div class="accent"></div>
+      <p class="col-note" id="handled-note"></p>
+      <div id="inflight"></div>
+      <div class="rows" id="rows"></div>
+    </section>
+
+    <section class="col col-waiting">
+      <h2>Waiting for you</h2>
+      <div class="accent"></div>
+      <p class="col-note">A real decision, with the context to make it.</p>
+      <div id="escalations"></div>
+    </section>
+  </main>
+
+  <footer>
+    Synthetic volunteers and shifts, generated by <code>data/seed.py</code>.
+  </footer>
+</div>
+
+<script>
+const POLL_MS = 2500;
+const seenRows = new Set();
+const seenCards = new Set();
+let firstPaint = true;    // do not animate the whole backlog on page load
+let inflight = [];
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;  // never innerHTML: some of
+  return node;                                      // this text is model-written
+}
+
+function mmss(seconds) {
+  const m = Math.floor(seconds / 60), s = seconds % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+
+function renderHandled(items) {
+  const host = document.getElementById("rows");
+  host.textContent = "";
+
+  if (!items.length) {
+    host.appendChild(el("p", "empty", "Nothing yet. Cancel a shift, then wait."));
+    return;
+  }
+
+  for (const item of items) {
+    const row = el("div", "row");
+    if (!firstPaint && !seenRows.has(item.id)) row.classList.add("enter");
+    seenRows.add(item.id);
+
+    row.appendChild(el("span", "kind", item.kind));
+    row.appendChild(el("span", "detail", item.detail));
+    row.appendChild(el("span", "when", item.ago));
+    host.appendChild(row);
+  }
+}
+
+function renderInflight() {
+  const host = document.getElementById("inflight");
+  host.textContent = "";
+
+  for (const ask of inflight) {
+    const row = el("div", "inflight");
+    row.appendChild(el("span", "kind", "waiting"));
+    row.appendChild(el("span", "detail",
+      ask.name + " has the " + ask.role.toLowerCase() + " shift to consider"));
+    row.appendChild(el("span", "clock",
+      ask.seconds_left > 0 ? mmss(ask.seconds_left) + " left" : "window closed"));
+    host.appendChild(row);
+  }
+}
+
+function renderEscalations(items) {
+  const host = document.getElementById("escalations");
+  host.textContent = "";
+
+  if (!items.length) {
+    host.appendChild(el("p", "empty", "Nothing. That is the point."));
+    return;
+  }
+
+  for (const item of items) {
+    const card = el("div", "card");
+    if (!firstPaint && !seenCards.has(item.id)) card.classList.add("enter");
+    seenCards.add(item.id);
+
+    card.appendChild(el("div", "reason", item.reason));
+    card.appendChild(el("p", "what",
+      "Shift " + item.shift_id + " — " + (item.role || "unknown role")));
+    card.appendChild(el("p", "detail", item.detail));
+    card.appendChild(el("div", "when", item.ago));
+
+    const button = el("button", null, "I have handled this");
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      const res = await fetch("/api/escalations/" + item.id + "/resolve",
+                              { method: "POST" });
+      if (res.ok) paint(await res.json());
+      else button.disabled = false;
+    });
+    card.appendChild(button);
+    host.appendChild(card);
+  }
+}
+
+function paint(state) {
+  document.getElementById("n-handled").textContent = state.counts.handled;
+  document.getElementById("n-waiting").textContent = state.counts.waiting;
+  document.getElementById("heartbeat-text").textContent =
+    state.last_tick ? "agent last woke " + state.last_tick
+                    : "waiting for the first tick";
+  document.getElementById("handled-note").textContent =
+    "One person asked at a time. " + state.policy.window_minutes +
+    " minutes to reply, " + state.policy.max_asks + " asks before a human is needed.";
+
+  inflight = state.inflight;
+  renderInflight();
+  renderHandled(state.handled);
+  renderEscalations(state.escalations);
+  firstPaint = false;
+}
+
+async function poll() {
+  try {
+    const res = await fetch("/api/state", { cache: "no-store" });
+    if (res.ok) paint(await res.json());
+  } catch (err) {
+    /* the scheduler may be mid-restart; the next poll catches up */
+  }
+}
+
+// Between polls, run the countdowns locally so the page is never frozen.
+setInterval(() => {
+  if (!inflight.length) return;
+  let changed = false;
+  for (const ask of inflight) {
+    if (ask.seconds_left > 0) { ask.seconds_left -= 1; changed = true; }
+  }
+  if (changed) renderInflight();
+}, 1000);
+
+poll();
+setInterval(poll, POLL_MS);
+</script>
+</body>
+</html>
