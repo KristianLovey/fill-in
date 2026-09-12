@@ -123,6 +123,21 @@ def send_ask(shift_id: int, volunteer_id: int, message: str) -> dict:
     if hours_left < URGENT_WINDOW_HOURS:
         return {"refused": "Starts too soon for the ask loop. Escalate instead."}
 
+    # One person at a time, enforced here rather than asked for in the prompt.
+    # Two wake-ups running at once would otherwise each pick a different name
+    # and send two "we need you" messages for the same shift. Asks past their
+    # window do not count - they are nobody's turn any more.
+    holding = query(
+        "SELECT v.name FROM asks a JOIN volunteers v ON v.id = a.volunteer_id "
+        "WHERE a.shift_id = ? AND a.status = 'pending' AND a.expires_at > ?",
+        (shift_id, iso(now())),
+    )
+    if holding:
+        return {
+            "refused": f"{holding[0]['name']} is still inside their response window. "
+                       f"One person at a time - wait for them or let it time out."
+        }
+
     vol = query("SELECT * FROM volunteers WHERE id = ?", (volunteer_id,))
     if not vol:
         return {"refused": f"No volunteer with id {volunteer_id}"}

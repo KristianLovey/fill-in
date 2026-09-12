@@ -30,7 +30,9 @@ DEFAULT_MODEL = {
 }
 
 SETUP_HINT = """
-No working model credentials found. Pick one of these:
+No working model credentials found.
+
+Pick one of these:
 
   Bedrock (AWS)          set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and
                          AWS_DEFAULT_REGION=us-east-1, on an IAM user with

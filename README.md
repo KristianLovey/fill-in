@@ -73,6 +73,7 @@ said no, or reach a human through any path except `escalate_to_human`.
 | Situation | What the agent does | Who is involved |
 |---|---|---|
 | A qualified volunteer is free and hasn't been asked yet | Asks exactly one of them, then waits | Nobody |
+| Someone is still inside their response window | Refuses to ask anybody else | Nobody |
 | That person declines, or their window expires | Moves to the next name | Nobody |
 | Someone accepts | Books them, releases the others | Nobody |
 | Two people accept at once | First accepted ask wins; the other is marked superseded | Nobody |
@@ -188,6 +189,20 @@ shared scale — plus **the roster this week** as one dot per shift, and the
 Colour is assigned by job, not by taste. Brand teal (3.3:1 on white) and amber
 (2.2:1) are strong enough for a border or a bar and far too weak for 11px type,
 so every label wears a darkened step of the same hue: measured, not eyeballed.
+Type is Inter, served from `web/static/fonts/` rather than a CDN, so the page
+renders identically offline and a screen recording never waits on a font.
+
+The top bar is the only place the dashboard does anything:
+
+| Action | Shortcut | What it does |
+|---|---|---|
+| Filter | `/` | Narrows shift cards and the audit log by role, volunteer or certificate |
+| Wake now | `w` | Runs one `tick()` immediately — the same one the scheduler runs, through the same tools. It exists so a demo doesn't wait 30 seconds |
+| Live / Paused | `p` | Freezes auto-refresh, for reading a card or recording a still frame |
+| Export log | — | The complete audit trail as CSV, for reporting upwards |
+
+If the server goes away the status dot stops pulsing and the bar says so — a
+page that quietly shows stale data is worse than one that admits it.
 
 ## Two scenarios
 

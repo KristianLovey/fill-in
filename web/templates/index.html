@@ -5,6 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fill In</title>
 <style>
+  /* -------------------------------------------------------------------- type
+     Inter, self-hosted. Served from this repo rather than a CDN so the
+     dashboard renders identically offline and a screen recording never waits
+     on a font request. Two subsets only - latin carries the interface,
+     latin-ext carries the Croatian diacritics. */
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/static/fonts/inter-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                   U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                   U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/static/fonts/inter-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+                   U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                   U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+                   U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
   /* ------------------------------------------------------------------ tokens
      Marks and text are separate tokens on purpose. The brand teal (3.3:1 on
      white) and amber (2.2:1) are strong enough for a border or a bar and far
@@ -42,9 +69,12 @@
     color: var(--ink);
     /* One typeface throughout. Numbers align with tabular figures rather than
        by switching to a second, monospaced family. */
-    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+    font: 15px/1.55 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Helvetica, Arial, sans-serif;
+    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   .num { font-variant-numeric: tabular-nums; }
@@ -81,6 +111,8 @@
     flex: 0 0 auto;
     animation: pulse 2.4s ease-in-out infinite;
   }
+  /* Stale data has to look different from live data, or the page lies. */
+  .pulse.stale { background: var(--bar); animation: none; }
   @keyframes pulse {
     0%, 100% { opacity: 0.3; transform: scale(1); }
     50%      { opacity: 1;   transform: scale(1.3); }
@@ -91,7 +123,89 @@
     border-radius: 3px;
     color: var(--muted);
     font-size: 11.5px;
+    white-space: nowrap;
   }
+
+  /* ------------------------------------------------------------------ search */
+  .search { position: relative; flex: 1 1 220px; max-width: 330px; }
+  .search input {
+    width: 100%;
+    padding: 8px 36px 8px 12px;
+    font: inherit;
+    font-size: 13.5px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    -webkit-appearance: none;
+  }
+  .search input:focus { outline: none; border-color: var(--bar); }
+  .search input::placeholder { color: var(--muted); }
+  .search kbd {
+    position: absolute;
+    right: 8px; top: 50%;
+    transform: translateY(-50%);
+    padding: 1px 6px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--card);
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+    pointer-events: none;
+    transition: opacity 0.12s;
+  }
+  .search input:focus ~ kbd, .search input:not(:placeholder-shown) ~ kbd { opacity: 0; }
+
+  /* ----------------------------------------------------------------- actions */
+  .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .btn:hover { border-color: var(--bar); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn:disabled:hover { border-color: var(--rule); }
+  .btn-wake { color: var(--teal-ink); border-color: var(--teal); font-weight: 600; }
+  .btn-wake:hover:not(:disabled) {
+    background: var(--teal-ink);
+    border-color: var(--teal-ink);
+    color: #fff;
+  }
+  .btn .led { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+  .btn.is-paused .led { background: var(--bar); }
+
+  /* ------------------------------------------------------------------- toast */
+  #toast {
+    position: fixed;
+    left: 50%; bottom: 26px;
+    transform: translateX(-50%) translateY(14px);
+    z-index: 70;
+    max-width: min(580px, calc(100vw - 32px));
+    padding: 13px 18px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 5px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.bad { background: #6E2020; }
 
   /* -------------------------------------------------------------------- page */
   .page { max-width: 1240px; margin: 0 auto; padding: 44px 28px 104px; }
@@ -407,6 +521,19 @@
 
   footer { margin-top: 76px; padding-top: 20px; border-top: 1px solid var(--rule);
            color: var(--muted); font-size: 12px; }
+  footer kbd {
+    display: inline-block;
+    min-width: 17px;
+    padding: 1px 5px;
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 11px;
+    text-align: center;
+  }
 
   @media (max-width: 940px) {
     main { grid-template-columns: 1fr; gap: 46px; }
@@ -428,10 +555,35 @@
     <strong>Fill In</strong>
     <span>Community Kitchen, Main St</span>
   </div>
-  <div class="agent-status">
-    <span class="pulse"></span>
-    <span id="tick-text">waiting for the first tick</span>
-    <span class="chip" id="model-chip">no model configured</span>
+
+  <div class="search">
+    <input id="q" type="search" autocomplete="off" spellcheck="false"
+           placeholder="Filter shifts, volunteers, log&hellip;"
+           aria-label="Filter shifts, volunteers and log entries">
+    <kbd>/</kbd>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-wake" id="btn-wake"
+            title="Run one wake-up now (w). The scheduler already does this on its own - this is here so a demo does not have to wait 30 seconds.">
+      Wake now
+    </button>
+
+    <button class="btn" id="btn-live"
+            title="Pause auto-refresh (p). Useful while reading a card or recording a still frame.">
+      <span class="led"></span><span id="live-label">Live</span>
+    </button>
+
+    <a class="btn" href="/api/audit.csv" id="btn-csv"
+       title="Download the complete audit trail as CSV - every action, with timestamps.">
+      Export log
+    </a>
+
+    <div class="agent-status">
+      <span class="pulse" id="pulse"></span>
+      <span id="tick-text">waiting for the first tick</span>
+      <span class="chip" id="model-chip">no model configured</span>
+    </div>
   </div>
 </div>
 
@@ -506,20 +658,33 @@
   </main>
 
   <footer>
-    Volunteers, shifts and availability are synthetic, generated by
-    <code>data/seed.py</code>. The agent runs from <code>run_tick.py</code>;
-    this page only reads what it did.
+    <div>
+      Volunteers, shifts and availability are synthetic, generated by
+      <code>data/seed.py</code>. The agent runs from <code>run_tick.py</code>;
+      this page only reads what it did.
+    </div>
+    <div style="margin-top:8px">
+      <kbd>/</kbd> filter &nbsp;&middot;&nbsp; <kbd>w</kbd> wake the agent
+      &nbsp;&middot;&nbsp; <kbd>p</kbd> pause refresh
+      &nbsp;&middot;&nbsp; <kbd>esc</kbd> clear filter
+    </div>
   </footer>
 </div>
 
 <div id="tip" role="tooltip"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const POLL_MS = 2500;
+const STALE_MS = 9000;     // no successful poll for this long = say so
 
 const seen = { audit: new Set(), esc: new Set(), shift: new Set() };
 let firstPaint = true;     // never animate the whole backlog on load
 let pending = [];          // asks whose countdown runs between polls
+let lastState = null;      // so filtering can re-render without a round trip
+let filterText = "";
+let paused = false;
+let lastOkAt = Date.now();
 
 /* Build every node with textContent. Some of this text is written by the model,
    so it is data, never markup. */
@@ -571,15 +736,17 @@ function chainRows(host, asks) {
   }
 }
 
-function renderShifts(shifts, policy) {
+function renderShifts(shifts, policy, total) {
   const host = document.getElementById("shifts");
   host.textContent = "";
   document.getElementById("shift-count").textContent =
-    shifts.length ? shifts.length + (shifts.length === 1 ? " shift" : " shifts") : "";
+    filterText ? shifts.length + " of " + total + " shown"
+               : (total ? total + (total === 1 ? " shift" : " shifts") : "");
 
   if (!shifts.length) {
-    host.appendChild(el("p", "empty",
-      "No open shifts and nothing in flight. Cancel one and the agent picks it up on its next wake-up."));
+    host.appendChild(el("p", "empty", total
+      ? "No shift matches that filter."
+      : "No open shifts and nothing in flight. Cancel one and the agent picks it up on its next wake-up."));
     return;
   }
 
@@ -767,14 +934,16 @@ function renderPolicy(policy) {
 }
 
 /* ----------------------------------------------------------------- audit log */
-function renderAudit(items) {
+function renderAudit(items, total) {
   const host = document.getElementById("audit");
   host.textContent = "";
   document.getElementById("audit-count").textContent =
-    items.length ? items.length + " most recent" : "";
+    filterText ? items.length + " of " + total + " shown"
+               : (total ? total + " most recent" : "");
 
   if (!items.length) {
-    host.appendChild(el("p", "empty", "Nothing logged yet."));
+    host.appendChild(el("p", "empty",
+      total ? "No log entry matches that filter." : "Nothing logged yet."));
     return;
   }
   for (const item of items) {
@@ -788,8 +957,26 @@ function renderAudit(items) {
   }
 }
 
+/* -------------------------------------------------------------------- filter */
+function hay() {
+  return Array.prototype.slice.call(arguments)
+    .filter(Boolean).join(" ").toLowerCase();
+}
+function shiftMatches(shift) {
+  if (!filterText) return true;
+  const names = shift.asks.map(a => a.name + " " + a.status).join(" ");
+  return hay(shift.role, shift.starts_in, shift.required_cert,
+             shift.assigned_name, names).indexOf(filterText) !== -1;
+}
+function auditMatches(entry) {
+  if (!filterText) return true;
+  return hay(entry.kind, entry.detail).indexOf(filterText) !== -1;
+}
+
 /* --------------------------------------------------------------------- paint */
 function paint(state) {
+  lastState = state;
+
   document.getElementById("kpi-handled").textContent = state.kpi.handled;
   document.getElementById("kpi-covered").textContent = state.kpi.covered;
   document.getElementById("kpi-waiting").textContent = state.kpi.waiting;
@@ -809,34 +996,130 @@ function paint(state) {
     "One person asked at a time, " + state.policy.window_minutes +
     " minutes to reply. The agent stops the moment a shift is covered.";
 
-  renderShifts(state.shifts, state.policy);
+  renderShifts(state.shifts.filter(shiftMatches), state.policy, state.shifts.length);
   renderEscalations(state.escalations);
   renderFairness(state.roster);
   renderWeek(state.week);
   renderPolicy(state.policy);
-  renderAudit(state.audit);
+  renderAudit(state.audit.filter(auditMatches), state.audit.length);
 
   pending = Array.from(document.querySelectorAll("[data-countdown]"));
   firstPaint = false;
 }
 
+function rerender() { if (lastState) paint(lastState); }
+
+/* --------------------------------------------------------------------- toast */
+let toastTimer = null;
+function toast(message, bad) {
+  const node = document.getElementById("toast");
+  node.textContent = message;
+  node.className = "on" + (bad ? " bad" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { node.className = ""; }, bad ? 9000 : 4500);
+}
+
+/* ---------------------------------------------------------------------- poll */
 async function poll() {
+  if (paused) return;
   try {
     const res = await fetch("/api/state", { cache: "no-store" });
-    if (res.ok) paint(await res.json());
+    if (res.ok) { paint(await res.json()); lastOkAt = Date.now(); }
   } catch (err) {
-    /* the scheduler may be mid-restart; the next poll catches up */
+    /* the server may be mid-restart; the next poll catches up */
   }
 }
 
-// Between polls the response windows keep ticking, so the page is never frozen.
-setInterval(() => {
-  for (const node of pending) {
-    let left = Number(node.dataset.countdown) - 1;
-    if (left < 0) left = 0;
-    node.dataset.countdown = String(left);
-    node.textContent = left > 0 ? mmss(left) + " left" : "window closed";
+/* A page that quietly shows old data is worse than one that admits it. */
+function freshness() {
+  const stale = Date.now() - lastOkAt > STALE_MS;
+  document.getElementById("pulse").classList.toggle("stale", stale || paused);
+  if (stale && !paused) {
+    document.getElementById("tick-text").textContent = "connection lost — retrying";
   }
+}
+
+/* ---------------------------------------------------------------------- wake */
+async function wake() {
+  const button = document.getElementById("btn-wake");
+  if (button.disabled) return;
+  button.disabled = true;
+  button.textContent = "Waking…";
+
+  try {
+    const res = await fetch("/api/tick", { method: "POST" });
+    const body = await res.json();
+    if (res.ok) {
+      paint(body);
+      lastOkAt = Date.now();
+      const woke = body.woke || {};
+      if (woke.errors && woke.errors.length) {
+        toast(woke.errors[0], true);
+      } else if (woke.open_shifts) {
+        toast("Agent woke and moved " + woke.moved + " of " + woke.open_shifts +
+              " open shift" + (woke.open_shifts === 1 ? "" : "s") + " forward.");
+      } else {
+        toast("Agent woke. Nothing is open, so it did nothing — " +
+              "which is the correct answer.");
+      }
+    } else {
+      toast(body.error || ("Wake failed (HTTP " + res.status + ")"), true);
+    }
+  } catch (err) {
+    toast("Could not reach the dashboard server.", true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Wake now";
+  }
+}
+
+/* --------------------------------------------------------------------- pause */
+function setPaused(next) {
+  paused = next;
+  document.getElementById("btn-live").classList.toggle("is-paused", paused);
+  document.getElementById("live-label").textContent = paused ? "Paused" : "Live";
+  document.getElementById("pulse").classList.toggle("stale", paused);
+  if (!paused) { lastOkAt = Date.now(); poll(); }
+}
+
+/* ------------------------------------------------------------------- wiring */
+const search = document.getElementById("q");
+
+document.getElementById("btn-wake").addEventListener("click", wake);
+document.getElementById("btn-live").addEventListener("click", () => setPaused(!paused));
+search.addEventListener("input", () => {
+  filterText = search.value.trim().toLowerCase();
+  rerender();
+});
+
+document.addEventListener("keydown", (event) => {
+  const typing = event.target === search;
+  if (event.key === "Escape" && typing) {
+    search.value = "";
+    filterText = "";
+    rerender();
+    search.blur();
+    return;
+  }
+  if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
+
+  if (event.key === "/") { event.preventDefault(); search.focus(); }
+  else if (event.key === "w") { event.preventDefault(); wake(); }
+  else if (event.key === "p") { event.preventDefault(); setPaused(!paused); }
+});
+
+// Between polls the response windows keep ticking, so the page is never frozen -
+// except when it is deliberately paused, where a still frame is the point.
+setInterval(() => {
+  if (!paused) {
+    for (const node of pending) {
+      let left = Number(node.dataset.countdown) - 1;
+      if (left < 0) left = 0;
+      node.dataset.countdown = String(left);
+      node.textContent = left > 0 ? mmss(left) + " left" : "window closed";
+    }
+  }
+  freshness();
 }, 1000);
 
 poll();

@@ -10,13 +10,21 @@ Read-only except for one button: resolving an escalation. The agent is not
 driven from here - it runs from run_tick.py.
 """
 
+import csv
+import io
+import mimetypes
 import os
 import sys
+import threading
 from datetime import datetime
+
+# Windows registries often lack this one, and the self-hosted Inter files
+# would otherwise go out as application/octet-stream.
+mimetypes.add_type("font/woff2", ".woff2")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, jsonify, render_template  # noqa: E402
+from flask import Flask, Response, jsonify, render_template  # noqa: E402
 
 from agent.db import query, execute, log_event, now  # noqa: E402
 from agent.tools import (  # noqa: E402
@@ -281,6 +289,64 @@ def api_state():
     response = jsonify(_state())
     response.headers["Cache-Control"] = "no-store"
     return response
+
+
+# Only one wake-up at a time in this process. The tools refuse a second ask
+# while somebody is still deciding, so a race cannot double-ask a shift - this
+# just keeps the button from stacking up slow model calls.
+_waking = threading.Lock()
+
+
+@app.route("/api/tick", methods=["POST"])
+def api_tick():
+    """Wake the agent now instead of waiting for the scheduler.
+
+    A convenience, not a control: it runs exactly the same tick() the scheduler
+    runs, through exactly the same tools.
+    """
+    if not _waking.acquire(blocking=False):
+        return jsonify({"error": "The agent is already awake and working."}), 409
+
+    try:
+        from agent.core import ProviderNotReady, tick
+
+        try:
+            result = tick()
+        except ProviderNotReady as exc:
+            headline = str(exc).strip().splitlines()[0].rstrip(":")
+            return jsonify({
+                "error": f"{headline}  Run  python -m agent.cli doctor  for setup steps.",
+                "hint": str(exc),
+            }), 503
+        except Exception as exc:
+            return jsonify({"error": f"{type(exc).__name__}: {exc}"}), 500
+
+        state = _state()
+        state["woke"] = {
+            "open_shifts": result["open_shifts"],
+            "moved": sum(1 for h in result["handled"] if "error" not in h),
+            "errors": [h["error"] for h in result["handled"] if "error" in h],
+        }
+        return jsonify(state)
+    finally:
+        _waking.release()
+
+
+@app.route("/api/audit.csv")
+def audit_csv():
+    """The whole audit trail, for a coordinator who has to report upwards."""
+    rows = query("SELECT ts, kind, shift_id, detail FROM events ORDER BY id")
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator="\n")
+    writer.writerow(["timestamp_utc", "event", "shift_id", "detail"])
+    for row in rows:
+        writer.writerow([row["ts"], row["kind"], row["shift_id"] or "", row["detail"]])
+
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="fillin-audit-log.csv"'},
+    )
 
 
 @app.route("/api/escalations/<int:escalation_id>/resolve", methods=["POST"])
