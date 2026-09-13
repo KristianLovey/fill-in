@@ -31,7 +31,12 @@ def get_shift(shift_id: int) -> dict:
 
     shift = rows[0]
     starts = _parse(shift["starts_at"])
+    ends = _parse(shift["ends_at"])
     shift["hours_until_start"] = round((starts - now()).total_seconds() / 3600, 1)
+    # Spelled out here so the model never has to work out a weekday from a date.
+    # In testing one model wrote "Tuesday" for a Monday shift, in a message to a
+    # volunteer - a fact like this belongs in code, not in the model's arithmetic.
+    shift["when"] = f"{starts:%A} {starts.day} {starts:%B}, {starts:%H:%M} to {ends:%H:%M}"
     return shift
 
 

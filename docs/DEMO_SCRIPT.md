@@ -5,11 +5,11 @@ The voiceover is under 600 words — about 145 a minute, which leaves room to br
 
 ## Before you record
 
-1. **Credentials.** `python -m agent.cli doctor` must report *ready*.
-2. **Rehearse once, on the same model.** Leave `FILLIN_MODEL` unset. The default,
-   `gemini-3.5-flash-lite`, is the model this whole script was verified on end to
-   end, and the fastest on the free tier at under a second a call. Do one full
-   dry run with it before the real take.
+1. **Credentials.** `python -m agent.cli doctor` must report `bedrock`,
+   `us.amazon.nova-2-lite-v1:0` and *ready*.
+2. **Rehearse once, on the same model.** Leave `FILLIN_MODEL` unset. The Bedrock
+   default, Amazon Nova 2 Lite, is the model this script was verified on end to
+   end, and AWS credits cover it. Do one full dry run before the real take.
 3. **Clean state.** Run `python data/seed.py` right before the take. The roster
    always starts on a Monday, so shift 3 always ranks **Ivan Bozic** first and
    **Ema Grgic** second. Scenario 1 depends on that, and it was checked against
@@ -71,8 +71,8 @@ python -m agent.cli cancel 3
 python run_tick.py 30
 ```
 
-Every 30 seconds rather than 20, to stay clear of the free tier's per-minute
-limit.
+Every 30 seconds rather than 20, so a burst of wake-ups never runs into a
+per-minute limit.
 
 **Screen:** within seconds the heartbeat updates and a *Warehouse sorting — In
 progress* card appears, with Ivan Bozic deciding and a countdown running.
@@ -136,8 +136,9 @@ appears under *Waiting for you*, and the waiting tile turns amber.
 
 **Screen:** `docs/architecture.svg`, then `agent/tools.py` scrolled to `send_ask`.
 
-> Under the hood it's a Strands agent running on Gemini, with six tools. A
-> scheduler wakes it, it takes one step per shift, and it stops. Every hard rule — the certificate, the
+> Under the hood it's a Strands agent running on Amazon Nova through Bedrock,
+> with six tools. A scheduler wakes it, it takes one step per shift, and it
+> stops. Every hard rule — the certificate, the
 > ask limit, the two-hour window, one person at a time, the fairness order — is a
 > return statement in the tools, not a sentence in the prompt. The model can be
 > wrong and still can't break them. And there's exactly one way for it to reach
@@ -166,7 +167,8 @@ this shot.
 |---|---|
 | The bar says *connection lost* | T1 stopped. Run `python web/app.py` again; the page reconnects on its own. |
 | A red toast after *Wake now* | No model is reachable. Run `python -m agent.cli doctor`. |
-| Scenario 1 escalates as "ambiguous" | The rehearsal model is too weak. Record with the stronger one. |
+| Scenario 1 escalates as "ambiguous" | Check `doctor` shows the Nova 2 Lite default and `FILLIN_MODEL` isn't overriding it. |
 | Nothing moves after `decline 3` | The scheduler interval hasn't elapsed, or the model call is slow. Wait, and cut it in the edit. |
-| `503 … high demand` or `429 Too Many Requests` in T2 | Google's free tier is briefly busy, or the per-minute limit was hit. A failed wake-up does nothing, and the next one retries on its own. Keep recording and cut the gap. |
+| `ThrottlingException`, `503` or `429` in T2 | The model provider is briefly busy, or a per-minute limit was hit. A failed wake-up does nothing, and the next one retries on its own. Keep recording and cut the gap. |
+| `Your account is currently being verified` | A new AWS account can't call models yet. Wait, or record on Gemini with `set FILLIN_PROVIDER=gemini`. |
 | You need a clean slate | `python data/seed.py`, then refresh the page. |

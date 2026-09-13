@@ -145,16 +145,21 @@ the user environment directly. Leave billing switched off on that project to sta
 on the free tier. Free-tier requests may be used by Google to improve its
 products; everything in this repo is synthetic, so nothing real is sent.
 
-**Amazon Bedrock**
+**Amazon Bedrock — what the demo runs on**
+
+Put an IAM user's access key in `~/.aws/credentials` and `region = us-east-1` in
+`~/.aws/config` (or use the usual `AWS_*` environment variables), then:
 
 ```bash
-set AWS_ACCESS_KEY_ID=...
-set AWS_SECRET_ACCESS_KEY=...
-set AWS_DEFAULT_REGION=us-east-1
+setx FILLIN_PROVIDER bedrock
 ```
 
-The IAM user needs `AmazonBedrockFullAccess`, and model access has to be enabled
-for that model in the Bedrock console in that region.
+The IAM user needs `AmazonBedrockFullAccess`. The default model is Amazon Nova 2
+Lite, `us.amazon.nova-2-lite-v1:0`. It is Amazon's own model, billed as Amazon
+Bedrock itself, so AWS credits apply to it; Anthropic models on Bedrock can be
+billed through AWS Marketplace, which promotional credits don't cover. A
+brand-new AWS account refuses model calls with "Your account is currently being
+verified" until verification finishes.
 
 **Anthropic API**
 
@@ -173,7 +178,7 @@ python -m agent.cli doctor
 | Variable | Default | Notes |
 |---|---|---|
 | `FILLIN_PROVIDER` | whichever credentials exist | `gemini`, `bedrock` or `anthropic` |
-| `FILLIN_MODEL` | `gemini-3.5-flash-lite` (Gemini)<br>`us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Bedrock)<br>`claude-sonnet-5` (Anthropic) | e.g. `gemini-3.8-flash` for a stronger Gemini, or `claude-haiku-4-5` to iterate cheaply on Anthropic |
+| `FILLIN_MODEL` | `gemini-3.5-flash-lite` (Gemini)<br>`us.amazon.nova-2-lite-v1:0` (Bedrock)<br>`claude-sonnet-5` (Anthropic) | e.g. `gemini-3.8-flash` for a stronger Gemini, or `claude-haiku-4-5` to iterate cheaply on Anthropic |
 | `PORT` | `5000` | Dashboard port |
 
 ### Run it

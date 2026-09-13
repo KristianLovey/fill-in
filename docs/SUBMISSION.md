@@ -44,7 +44,7 @@ The volunteer coordinator at a community kitchen, food bank or shelter. Usually 
 
 ### How I built it
 
-Fill In is a **Strands Agents** agent. The demo runs on Google's **Gemini** (`gemini-3.5-flash-lite`, on the free tier); the same code runs Claude on Amazon Bedrock or the Anthropic API by changing one environment variable. Nothing about the rules depends on which model is reasoning, because the rules live in the tools.
+Fill In is a **Strands Agents** agent running on **Amazon Nova 2 Lite through Amazon Bedrock**. The same code runs Gemini or Claude by changing one environment variable. Nothing about the rules depends on which model is reasoning, because the rules live in the tools.
 
 - **One step per wake-up.** A scheduler calls `tick()`, which gives each open shift a fresh `Agent` and asks it for the single next step: check replies, book an acceptance, ask the next person, wait, or escalate. The agent has no loop of its own and no memory between wake-ups; all state lives in SQLite. In production the scheduler maps directly onto EventBridge calling a Lambda.
 - **Six tools, with the rules inside them.** `get_shift`, `rank_candidates`, `send_ask`, `check_replies`, `confirm_and_book` and `escalate_to_human`. Every hard rule is a `return` statement in tool code rather than a sentence in the prompt. `send_ask` refuses an uncertified volunteer, a second person while someone is still deciding, anyone but the fairest remaining candidate, a sixth ask, and any ask inside the two-hour window. The model can be confused or simply wrong and still cannot break them.
@@ -58,6 +58,8 @@ Fill In is a **Strands Agents** agent. The demo runs on Google's **Gemini** (`ge
 
 **A demo that changed overnight.** Volunteer availability is weekly, but the seed anchored the roster to "tomorrow", so the same seed produced different rankings on different days. The week now always starts on a Monday, and every ranking is identical whichever day it runs.
 
+**Credits that wouldn't have covered the model.** The plan was Claude on Amazon Bedrock, but Anthropic models on Bedrock can be billed through AWS Marketplace, which promotional credits don't cover. The agent runs on Amazon Nova instead — Amazon's own model, billed as Bedrock — and because the rules live in the tools, switching was a one-line change.
+
 **A colour that couldn't carry text.** The amber that means "a person is needed" is 2.2:1 on white — fine for a border, unreadable at 11px. The interface uses the pure hue only for marks and a darkened step of it for every label, with the ratios measured rather than judged by eye.
 
 ### Accomplishments I'm proud of
@@ -65,7 +67,7 @@ Fill In is a **Strands Agents** agent. The demo runs on Google's **Gemini** (`ge
 - The model is allowed to be wrong. Every rule it could break is a refusal it can't argue with.
 - An empty "Waiting for you" column reads as the product working, not as a blank screen.
 - Fairness is visible: the dashboard puts the volunteers carrying the most next to the ones the agent reaches for instead.
-- Swapping the model is one environment variable. On its first full run, on Gemini's free tier, the agent followed every rule without a single refusal from the tools — and the refusals were there if it hadn't.
+- The rules hold whichever model is reasoning. The full demo ran end to end on Gemini 3.5 Flash-Lite and on three Amazon Nova models. When Nova Lite reached past the fairest volunteer, and later invented a volunteer id, the tools refused and it corrected itself; when Nova models tried to ask a volunteer about a shift starting within two hours, the tool refused and they escalated instead.
 
 ### What I learned
 
@@ -82,7 +84,7 @@ The prompt is the place for judgement — how to word a warm, easy-to-decline me
 
 ## Built with
 
-strands-agents · gemini · python · flask · sqlite
+strands-agents · amazon-bedrock · amazon-nova · gemini · python · flask · sqlite
 
 ## About the data
 

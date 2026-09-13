@@ -30,7 +30,10 @@ DEFAULT_MODEL = {
     # The demo script was verified end to end on this one, and it is the fastest
     # on the free tier. gemini-3.8-flash returned "high demand" 503s in testing.
     "gemini": "gemini-3.5-flash-lite",
-    "bedrock": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    # Amazon's own model, billed as Amazon Bedrock itself, so AWS credits apply.
+    # Anthropic models on Bedrock can be billed through AWS Marketplace instead,
+    # which promotional credits do not cover. Nova 2 Lite ran the demo cleanly.
+    "bedrock": "us.amazon.nova-2-lite-v1:0",
     "anthropic": "claude-sonnet-5",
 }
 
@@ -212,7 +215,8 @@ escalate_to_human is your only way to reach a person. There is no other channel,
 so do not describe problems in your reply and assume someone reads them.
 
 When you write a message in send_ask, write it to that specific person about
-that specific shift. Mention the role, day and time. Keep it to two sentences,
+that specific shift. Mention the role, and the day and time exactly as
+get_shift's `when` gives them. Keep it to two sentences,
 warm and easy to decline - these are volunteers, not staff. Never imply they are
 letting anyone down.
 
