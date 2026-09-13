@@ -50,14 +50,14 @@ def _agent_config():
     polls every couple of seconds.
     """
     try:
-        from agent.core import DEFAULT_MODEL, resolve_provider
+        from agent.core import resolve_model, resolve_provider
 
         provider = resolve_provider()
         if not provider:
             return {"provider": None, "model": None}
         return {
             "provider": provider,
-            "model": os.environ.get("FILLIN_MODEL") or DEFAULT_MODEL.get(provider),
+            "model": resolve_model(provider),
         }
     except Exception:
         return {"provider": None, "model": None}

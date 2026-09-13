@@ -139,9 +139,10 @@ setx GEMINI_API_KEY "your-key"
 setx FILLIN_PROVIDER gemini
 ```
 
-Create the key at [Google AI Studio](https://aistudio.google.com/apikey), and
-open a new terminal after `setx`. Leave billing switched off on that project to
-stay on the free tier. Free-tier requests may be used by Google to improve its
+Create the key at [Google AI Studio](https://aistudio.google.com/apikey). On
+Windows there's no need to open a new terminal after `setx`: Fill In also reads
+the user environment directly. Leave billing switched off on that project to stay
+on the free tier. Free-tier requests may be used by Google to improve its
 products; everything in this repo is synthetic, so nothing real is sent.
 
 **Amazon Bedrock**

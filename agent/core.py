@@ -7,6 +7,7 @@ argue with a prompt, but not with a refusal.
 """
 
 import os
+import sys
 
 from strands import Agent
 
@@ -42,7 +43,6 @@ Pick one of these:
                          create a key at https://aistudio.google.com/apikey
                          setx GEMINI_API_KEY "your-key"
                          setx FILLIN_PROVIDER gemini
-                         then open a new terminal
 
   Bedrock (AWS)          set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and
                          AWS_DEFAULT_REGION=us-east-1, on an IAM user with
@@ -72,16 +72,40 @@ def _aws_credentials_exist():
         return False
 
 
+def _env(name):
+    """A setting from the environment, falling back to the Windows user environment.
+
+    `setx` saves to the user environment, but a terminal that was already open -
+    and every VS Code terminal until VS Code restarts - never sees it. Reading the
+    registry as well means a key saved with setx works straight away, anywhere.
+    """
+    value = os.environ.get(name)
+    if value or sys.platform != "win32":
+        return value
+    try:
+        import winreg
+
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as reg:
+            return winreg.QueryValueEx(reg, name)[0]
+    except OSError:
+        return None
+
+
+def resolve_model(provider):
+    """The model the agent will run: FILLIN_MODEL if set, else the provider default."""
+    return _env("FILLIN_MODEL") or DEFAULT_MODEL.get(provider)
+
+
 def resolve_provider():
     """Explicit choice wins; otherwise whichever credentials are present."""
-    explicit = os.environ.get("FILLIN_PROVIDER", "").strip().lower()
+    explicit = (_env("FILLIN_PROVIDER") or "").strip().lower()
     if explicit:
         return explicit
     if _aws_credentials_exist():
         return "bedrock"
-    if os.environ.get("ANTHROPIC_API_KEY"):
+    if _env("ANTHROPIC_API_KEY"):
         return "anthropic"
-    if os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY"):
+    if _env("GOOGLE_API_KEY") or _env("GEMINI_API_KEY"):
         return "gemini"
     return ""
 
@@ -91,14 +115,14 @@ def build_model(provider=None):
     if not provider:
         raise ProviderNotReady(SETUP_HINT)
 
-    model_id = os.environ.get("FILLIN_MODEL") or DEFAULT_MODEL.get(provider)
+    model_id = resolve_model(provider)
     if not model_id:
         raise ProviderNotReady(
             f"Unknown FILLIN_PROVIDER '{provider}'. Use 'gemini', 'bedrock' or 'anthropic'."
         )
 
     if provider == "anthropic":
-        if not os.environ.get("ANTHROPIC_API_KEY"):
+        if not _env("ANTHROPIC_API_KEY"):
             raise ProviderNotReady("FILLIN_PROVIDER=anthropic but ANTHROPIC_API_KEY is not set.")
         try:
             from strands.models.anthropic import AnthropicModel
@@ -106,11 +130,15 @@ def build_model(provider=None):
             raise ProviderNotReady(
                 'The Anthropic provider needs: pip install "strands-agents[anthropic]"'
             ) from exc
-        return AnthropicModel(model_id=model_id, max_tokens=2000)
+        return AnthropicModel(
+            client_args={"api_key": _env("ANTHROPIC_API_KEY")},
+            model_id=model_id,
+            max_tokens=2000,
+        )
 
     if provider == "gemini":
         # Same precedence as Google's own SDKs: GOOGLE_API_KEY wins if both exist.
-        key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        key = _env("GOOGLE_API_KEY") or _env("GEMINI_API_KEY")
         if not key:
             raise ProviderNotReady(
                 "FILLIN_PROVIDER=gemini but neither GEMINI_API_KEY nor GOOGLE_API_KEY is set."

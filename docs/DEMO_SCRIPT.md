@@ -14,7 +14,8 @@ The voiceover is under 600 words — about 145 a minute, which leaves room to br
    always starts on a Monday, so shift 3 always ranks **Ivan Bozic** first and
    **Ema Grgic** second. Scenario 1 depends on that, and it was checked against
    four different seed dates.
-4. **Three terminals.**
+4. **Three terminals**, each with the virtual environment activated first
+   (`.venv\Scriptsctivate.bat`) if you use one.
    - T1 — `python web/app.py`. Leave it running.
    - T2 — the scheduler. Don't start it yet. It prints every tool call as the
      agent makes it (`Tool #3: rank_candidates`), which is worth having on screen.

@@ -91,14 +91,12 @@ def reply(shift_id, volunteer_id, status):
 
 def doctor():
     """Say which provider will be used, before a tick fails in a stack trace."""
-    from agent.core import DEFAULT_MODEL, ProviderNotReady, build_model, resolve_provider
+    from agent.core import ProviderNotReady, build_model, resolve_model, resolve_provider
 
     provider = resolve_provider()
     print(f"provider : {provider or '(none found)'}")
     if provider:
-        import os
-
-        print(f"model    : {os.environ.get('FILLIN_MODEL') or DEFAULT_MODEL.get(provider)}")
+        print(f"model    : {resolve_model(provider)}")
     try:
         build_model()
         print("status   : ready. Credentials resolve and the model can be built.")
