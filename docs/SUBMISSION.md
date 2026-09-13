@@ -44,11 +44,11 @@ The volunteer coordinator at a community kitchen, food bank or shelter. Usually 
 
 ### How I built it
 
-Fill In is a **Strands Agents** agent backed by Claude — on Amazon Bedrock by default, or the Anthropic API behind a single environment variable.
+Fill In is a **Strands Agents** agent. The demo runs on Google's **Gemini** (`gemini-3.5-flash-lite`, on the free tier); the same code runs Claude on Amazon Bedrock or the Anthropic API by changing one environment variable. Nothing about the rules depends on which model is reasoning, because the rules live in the tools.
 
 - **One step per wake-up.** A scheduler calls `tick()`, which gives each open shift a fresh `Agent` and asks it for the single next step: check replies, book an acceptance, ask the next person, wait, or escalate. The agent has no loop of its own and no memory between wake-ups; all state lives in SQLite. In production the scheduler maps directly onto EventBridge calling a Lambda.
 - **Six tools, with the rules inside them.** `get_shift`, `rank_candidates`, `send_ask`, `check_replies`, `confirm_and_book` and `escalate_to_human`. Every hard rule is a `return` statement in tool code rather than a sentence in the prompt. `send_ask` refuses an uncertified volunteer, a second person while someone is still deciding, anyone but the fairest remaining candidate, a sixth ask, and any ask inside the two-hour window. The model can be confused or simply wrong and still cannot break them.
-- **One channel to a human.** `escalate_to_human` is the only path that reaches a person. There is no fallback where the agent mentions a problem in its reply and hopes somebody reads it.
+- **One channel to a human.** `escalate_to_human` is the only path that reaches a person, and it attaches who could still cover the shift — fairest first, certificate checked — looked up from the database rather than written by the model, so every escalation is actionable. There is no fallback where the agent mentions a problem in its reply and hopes somebody reads it.
 - **Fairness scoring.** Recent shifts and recent asks push a volunteer down the ranking, and anyone asked six or more times in 30 days goes to the back of the queue.
 - **A Flask dashboard** reading the audit log and the escalations, with a filter, a CSV export of the whole audit trail for reporting, and a manual wake for demos.
 
@@ -65,6 +65,7 @@ Fill In is a **Strands Agents** agent backed by Claude — on Amazon Bedrock by 
 - The model is allowed to be wrong. Every rule it could break is a refusal it can't argue with.
 - An empty "Waiting for you" column reads as the product working, not as a blank screen.
 - Fairness is visible: the dashboard puts the volunteers carrying the most next to the ones the agent reaches for instead.
+- Swapping the model is one environment variable. On its first full run, on Gemini's free tier, the agent followed every rule without a single refusal from the tools — and the refusals were there if it hadn't.
 
 ### What I learned
 
@@ -81,7 +82,7 @@ The prompt is the place for judgement — how to word a warm, easy-to-decline me
 
 ## Built with
 
-strands-agents · claude · amazon-bedrock · python · flask · sqlite
+strands-agents · gemini · python · flask · sqlite
 
 ## About the data
 

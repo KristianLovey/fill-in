@@ -26,7 +26,9 @@ from agent.tools import (
 # credentials exist win. Gemini's free tier needs neither.
 
 DEFAULT_MODEL = {
-    "gemini": "gemini-3.8-flash",
+    # The demo script was verified end to end on this one, and it is the fastest
+    # on the free tier. gemini-3.8-flash returned "high demand" 503s in testing.
+    "gemini": "gemini-3.5-flash-lite",
     "bedrock": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     "anthropic": "claude-sonnet-5",
 }
@@ -51,9 +53,8 @@ Pick one of these:
                          set ANTHROPIC_API_KEY
                          set FILLIN_PROVIDER=anthropic
 
-Override the model with FILLIN_MODEL. Use a lighter one while iterating
-(gemini-3.5-flash-lite, or claude-haiku-4-5 on the Anthropic provider) and the
-stronger default for the recording.
+Override the model with FILLIN_MODEL - for example gemini-3.8-flash for a
+stronger Gemini, or claude-haiku-4-5 to iterate cheaply on the Anthropic API.
 """.strip()
 
 

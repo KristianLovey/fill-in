@@ -6,16 +6,18 @@ The voiceover is under 600 words — about 145 a minute, which leaves room to br
 ## Before you record
 
 1. **Credentials.** `python -m agent.cli doctor` must report *ready*.
-2. **Rehearse cheap, record good.** Do one full dry run with a cheap model
-   (`set FILLIN_MODEL=claude-haiku-4-5` on the Anthropic provider), then clear
-   `FILLIN_MODEL` before the real take.
+2. **Rehearse once, on the same model.** Leave `FILLIN_MODEL` unset. The default,
+   `gemini-3.5-flash-lite`, is the model this whole script was verified on end to
+   end, and the fastest on the free tier at under a second a call. Do one full
+   dry run with it before the real take.
 3. **Clean state.** Run `python data/seed.py` right before the take. The roster
    always starts on a Monday, so shift 3 always ranks **Ivan Bozic** first and
    **Ema Grgic** second. Scenario 1 depends on that, and it was checked against
    four different seed dates.
 4. **Three terminals.**
    - T1 — `python web/app.py`. Leave it running.
-   - T2 — the scheduler. Don't start it yet.
+   - T2 — the scheduler. Don't start it yet. It prints every tool call as the
+     agent makes it (`Tool #3: rank_candidates`), which is worth having on screen.
    - T3 — the CLI, standing in for the volunteers.
 5. **Browser** at `http://127.0.0.1:5000`, window about **1440 px wide**, zoom
    100 %. At that width the top bar fits on one line. Hide the bookmarks bar and
@@ -65,8 +67,11 @@ python -m agent.cli cancel 3
 **T2:**
 
 ```
-python run_tick.py 20
+python run_tick.py 30
 ```
+
+Every 30 seconds rather than 20, to stay clear of the free tier's per-minute
+limit.
 
 **Screen:** within seconds the heartbeat updates and a *Warehouse sorting — In
 progress* card appears, with Ivan Bozic deciding and a countdown running.
@@ -120,8 +125,9 @@ appears under *Waiting for you*, and the waiting tile turns amber.
 
 > This time it doesn't ask anyone. With under two hours to go, a message somebody
 > might read in twenty minutes is the wrong tool — so it escalates straight away.
-> One card, with what I need to act: the shift, the certificate, and who's
-> already been contacted. Nobody.
+> One card, with what I need to act: the shift, the certificate, that nobody's
+> been contacted — and who could cover it, fairest first. That list doesn't come
+> from the model. The tool looks it up, so it's there however the model writes.
 
 **Stop the scheduler** (Ctrl + C in T2).
 
@@ -129,8 +135,8 @@ appears under *Waiting for you*, and the waiting tile turns amber.
 
 **Screen:** `docs/architecture.svg`, then `agent/tools.py` scrolled to `send_ask`.
 
-> Under the hood it's a Strands agent with six tools. A scheduler wakes it, it
-> takes one step per shift, and it stops. Every hard rule — the certificate, the
+> Under the hood it's a Strands agent running on Gemini, with six tools. A
+> scheduler wakes it, it takes one step per shift, and it stops. Every hard rule — the certificate, the
 > ask limit, the two-hour window, one person at a time, the fairness order — is a
 > return statement in the tools, not a sentence in the prompt. The model can be
 > wrong and still can't break them. And there's exactly one way for it to reach
@@ -145,10 +151,11 @@ appears under *Waiting for you*, and the waiting tile turns amber.
 >
 > Nobody phones down the list any more.
 
-Read **N** off the *decisions handled* tile and say the number that is actually on
-screen. After both scenarios exactly as scripted it should read **7**. For a
-bigger number, cancel a few more shifts off camera first (`cancel 7`,
-`cancel 12`) and let the agent really work them before this shot.
+Read **N** off the *decisions handled* tile and say the number that is actually
+on screen. After both scenarios exactly as scripted it reads **7** — that is what
+the first real run produced. For a bigger number, cancel a few more shifts off
+camera first (`cancel 7`, `cancel 12`) and let the agent really work them before
+this shot.
 
 ---
 
@@ -160,4 +167,5 @@ bigger number, cancel a few more shifts off camera first (`cancel 7`,
 | A red toast after *Wake now* | No model is reachable. Run `python -m agent.cli doctor`. |
 | Scenario 1 escalates as "ambiguous" | The rehearsal model is too weak. Record with the stronger one. |
 | Nothing moves after `decline 3` | The scheduler interval hasn't elapsed, or the model call is slow. Wait, and cut it in the edit. |
+| `503 … high demand` or `429 Too Many Requests` in T2 | Google's free tier is briefly busy, or the per-minute limit was hit. A failed wake-up does nothing, and the next one retries on its own. Keep recording and cut the gap. |
 | You need a clean slate | `python data/seed.py`, then refresh the page. |

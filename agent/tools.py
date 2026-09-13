@@ -289,8 +289,9 @@ def escalate_to_human(shift_id: int, reason: str, detail: str) -> dict:
     Args:
         shift_id: The shift in question.
         reason: Short label, e.g. 'ask_limit_reached' or 'starts_too_soon'.
-        detail: One or two sentences the coordinator can act on, including
-            who was already asked and what you suggest.
+        detail: One or two sentences the coordinator can act on, and what you
+            suggest. Who could still cover the shift is added from the
+            database automatically.
     """
     existing = query(
         "SELECT id FROM escalations WHERE shift_id = ? AND resolved = 0", (shift_id,)
@@ -298,13 +299,27 @@ def escalate_to_human(shift_id: int, reason: str, detail: str) -> dict:
     if existing:
         return {"already_escalated": True, "shift_id": shift_id}
 
+    # The model supplies the judgement. The fact a coordinator most needs in
+    # order to act - who could actually cover this - is added here from the
+    # database, so an escalation is actionable however well the model wrote it.
+    could_cover = []
+    shift = query("SELECT * FROM shifts WHERE id = ?", (shift_id,))
+    if shift:
+        cert = shift[0]["required_cert"]
+        could_cover = [c["name"] for c in _ranked(shift[0])[:3]]
+        if could_cover:
+            held = f" (all hold {cert})" if cert else ""
+            detail = f"{detail.rstrip()} Could cover it, fairest first{held}: {', '.join(could_cover)}."
+        else:
+            detail = f"{detail.rstrip()} Nobody qualified and not yet asked is free at that hour."
+
     execute(
         "INSERT INTO escalations (shift_id, reason, detail, created_at) VALUES (?, ?, ?, ?)",
         (shift_id, reason, detail, iso(now())),
     )
     execute("UPDATE shifts SET status = 'escalated' WHERE id = ?", (shift_id,))
     log_event("escalated", f"{reason}: {detail}", shift_id)
-    return {"escalated": True, "shift_id": shift_id, "reason": reason}
+    return {"escalated": True, "shift_id": shift_id, "reason": reason, "could_cover": could_cover}
 
 
 TOOLS = [

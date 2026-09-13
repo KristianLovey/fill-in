@@ -87,6 +87,11 @@ reach a human through any path except `escalate_to_human`.
 `escalate_to_human` is the only channel to a person. There is no fallback where
 the agent mentions a problem in its reply and hopes somebody reads it.
 
+Every escalation also names who could still cover the shift: the three fairest
+volunteers who hold the certificate and are free at that hour. The tool looks
+that up and attaches it itself, so it is there however well the model wrote the
+rest.
+
 Policy constants, all in [`agent/tools.py`](agent/tools.py):
 
 | Constant | Value | Meaning |
@@ -167,7 +172,7 @@ python -m agent.cli doctor
 | Variable | Default | Notes |
 |---|---|---|
 | `FILLIN_PROVIDER` | whichever credentials exist | `gemini`, `bedrock` or `anthropic` |
-| `FILLIN_MODEL` | `gemini-3.8-flash` (Gemini)<br>`us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Bedrock)<br>`claude-sonnet-5` (Anthropic) | Something lighter while iterating, e.g. `gemini-3.5-flash-lite` or `claude-haiku-4-5` |
+| `FILLIN_MODEL` | `gemini-3.5-flash-lite` (Gemini)<br>`us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Bedrock)<br>`claude-sonnet-5` (Anthropic) | e.g. `gemini-3.8-flash` for a stronger Gemini, or `claude-haiku-4-5` to iterate cheaply on Anthropic |
 | `PORT` | `5000` | Dashboard port |
 
 ### Run it
