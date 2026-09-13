@@ -8,8 +8,8 @@
                                           path
   python -m agent.cli tick                wake the agent once
   python -m agent.cli loop [n] [secs]     wake it n times, secs apart
-  python -m agent.cli accept <shift> <volunteer>
-  python -m agent.cli decline <shift> <volunteer>
+  python -m agent.cli accept <shift> [volunteer]    answer as whoever is being
+  python -m agent.cli decline <shift> [volunteer]   asked, or as a named volunteer
 
 Nothing here is part of the agent. It stands in for the world: volunteers
 replying, a coordinator watching. The agent only ever runs from tick().
@@ -61,15 +61,30 @@ def urgent(shift_id, minutes=90):
 
 
 def reply(shift_id, volunteer_id, status):
-    rows = query(
-        "SELECT id FROM asks WHERE shift_id = ? AND volunteer_id = ? AND status = 'pending'",
-        (shift_id, volunteer_id),
-    )
+    """Answer as a volunteer.
+
+    Without a volunteer id, answers as whoever is currently being asked. There
+    is only ever one - send_ask refuses a second - so a demo never needs to look
+    an id up, and never breaks when the ranking changes.
+    """
+    if volunteer_id is None:
+        rows = query(
+            "SELECT id, volunteer_id FROM asks WHERE shift_id = ? AND status = 'pending'",
+            (shift_id,),
+        )
+    else:
+        rows = query(
+            "SELECT id, volunteer_id FROM asks "
+            "WHERE shift_id = ? AND volunteer_id = ? AND status = 'pending'",
+            (shift_id, volunteer_id),
+        )
     if not rows:
-        print("No pending ask for that pair.")
+        print(f"Nobody is waiting on an answer for shift {shift_id} right now."
+              if volunteer_id is None else "No pending ask for that volunteer on that shift.")
         return
-    execute("UPDATE asks SET status = ? WHERE id = ?", (status, rows[0]["id"]))
-    name = query("SELECT name FROM volunteers WHERE id = ?", (volunteer_id,))[0]["name"]
+    ask = rows[0]
+    execute("UPDATE asks SET status = ? WHERE id = ?", (status, ask["id"]))
+    name = query("SELECT name FROM volunteers WHERE id = ?", (ask["volunteer_id"],))[0]["name"]
     log_event(status, f"{name} {status} shift {shift_id}.", shift_id)
     print(f"{name} -> {status}")
 
@@ -132,10 +147,9 @@ def main():
         cancel(int(sys.argv[2]))
     elif cmd == "urgent":
         urgent(int(sys.argv[2]), int(sys.argv[3]) if len(sys.argv) > 3 else 90)
-    elif cmd == "accept":
-        reply(int(sys.argv[2]), int(sys.argv[3]), "accepted")
-    elif cmd == "decline":
-        reply(int(sys.argv[2]), int(sys.argv[3]), "declined")
+    elif cmd in ("accept", "decline"):
+        volunteer = int(sys.argv[3]) if len(sys.argv) > 3 else None
+        reply(int(sys.argv[2]), volunteer, "accepted" if cmd == "accept" else "declined")
     elif cmd == "status":
         status()
     elif cmd == "doctor":

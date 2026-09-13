@@ -536,7 +536,17 @@
   }
 
   @media (max-width: 940px) {
-    main { grid-template-columns: 1fr; gap: 46px; }
+    main { grid-template-columns: 1fr; gap: 0; }
+    /* One column is how a coordinator sees this on a phone, which is where they
+       are most likely to look. The card that needs them comes first - not under
+       eleven rows of audit log. Sections keep their own bottom margin. */
+    .col-left, .col-right { display: contents; }
+    .sec-waiting { order: 1; }
+    .sec-handled { order: 2; }
+    .sec-fair    { order: 3; }
+    .sec-week    { order: 4; }
+    .sec-policy  { order: 5; }
+    .sec-audit   { order: 6; }
     .page { padding: 32px 18px 80px; }
     .topbar { padding: 14px 18px; }
     .lede { font-size: 18px; }
@@ -607,15 +617,15 @@
 
   <main>
     <!-- ============================ left: the agent's work ============================ -->
-    <div>
-      <section class="block teal-head">
+    <div class="col-left">
+      <section class="block teal-head sec-handled">
         <h2 class="h2">Handled without you <em id="shift-count"></em></h2>
         <div class="accent"></div>
         <p class="sub" id="handled-sub"></p>
         <div id="shifts"></div>
       </section>
 
-      <section class="block">
+      <section class="block sec-audit">
         <h2 class="h2">Audit log <em id="audit-count"></em></h2>
         <div class="accent"></div>
         <p class="sub">Every autonomous action, in the order it happened.</p>
@@ -624,15 +634,15 @@
     </div>
 
     <!-- ============================ right: the human's column ======================== -->
-    <div>
-      <section class="block amber-head">
+    <div class="col-right">
+      <section class="block amber-head sec-waiting">
         <h2 class="h2">Waiting for you</h2>
         <div class="accent"></div>
         <p class="sub">A real decision, with the context to make it.</p>
         <div id="escalations"></div>
       </section>
 
-      <section class="block teal-head">
+      <section class="block teal-head sec-fair">
         <h2 class="h2">Fairness</h2>
         <div class="accent"></div>
         <p class="sub">Shifts worked in the last 30 days, on one scale. The agent
@@ -641,14 +651,14 @@
         <p class="footnote" id="protected-note"></p>
       </section>
 
-      <section class="block teal-head">
+      <section class="block teal-head sec-week">
         <h2 class="h2">The roster this week</h2>
         <div class="accent"></div>
         <div class="dots" id="week"></div>
         <div class="legend" id="week-legend"></div>
       </section>
 
-      <section class="block teal-head">
+      <section class="block teal-head sec-policy">
         <h2 class="h2">Policy</h2>
         <div class="accent"></div>
         <p class="sub">Enforced in tool code, not in the prompt.</p>

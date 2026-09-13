@@ -35,29 +35,19 @@ def get_shift(shift_id: int) -> dict:
     return shift
 
 
-@tool
-def rank_candidates(shift_id: int) -> list:
-    """Rank volunteers who could cover this shift, best first.
+def _ranked(shift):
+    """Every volunteer who could cover this shift, fairest first.
 
-    Filters out anyone lacking the required certificate or unavailable at that
-    time, then scores on fairness: people who have done fewer shifts recently
-    and been pestered less rank higher. Already-asked volunteers are excluded.
-
-    Args:
-        shift_id: The shift that needs covering.
+    Shared by rank_candidates, which shows the model the order, and send_ask,
+    which enforces it - so the order the model is shown is the order it follows.
     """
-    shift = query("SELECT * FROM shifts WHERE id = ?", (shift_id,))
-    if not shift:
-        return [{"error": f"No shift with id {shift_id}"}]
-    shift = shift[0]
-
     starts = _parse(shift["starts_at"])
     weekday, hour = starts.weekday(), starts.hour
     required = shift["required_cert"]
 
     already = {
         r["volunteer_id"]
-        for r in query("SELECT volunteer_id FROM asks WHERE shift_id = ?", (shift_id,))
+        for r in query("SELECT volunteer_id FROM asks WHERE shift_id = ?", (shift["id"],))
     }
 
     candidates = []
@@ -96,15 +86,35 @@ def rank_candidates(shift_id: int) -> list:
         })
 
     candidates.sort(key=lambda c: c["score"], reverse=True)
-    return candidates[:8]
+    return candidates
+
+
+@tool
+def rank_candidates(shift_id: int) -> list:
+    """Rank volunteers who could cover this shift, best first.
+
+    Filters out anyone lacking the required certificate or unavailable at that
+    time, then scores on fairness: people who have done fewer shifts recently
+    and been pestered less rank higher. Already-asked volunteers are excluded.
+    send_ask only accepts the volunteer at the top of this list.
+
+    Args:
+        shift_id: The shift that needs covering.
+    """
+    shift = query("SELECT * FROM shifts WHERE id = ?", (shift_id,))
+    if not shift:
+        return [{"error": f"No shift with id {shift_id}"}]
+    return _ranked(shift[0])[:8]
 
 
 @tool
 def send_ask(shift_id: int, volunteer_id: int, message: str) -> dict:
     """Ask one volunteer to cover a shift and start their response window.
 
-    Refuses if the shift is already covered, if the volunteer lacks the required
-    certificate, if they have already been asked, or if the ask limit is reached.
+    Refuses if the shift is already covered or starts too soon, if someone else
+    is still deciding, if the volunteer lacks the required certificate or was
+    already asked, if the ask limit is reached, or if the volunteer is not the
+    fairest remaining candidate from rank_candidates.
 
     Args:
         shift_id: The shift needing cover.
@@ -157,6 +167,19 @@ def send_ask(shift_id: int, volunteer_id: int, message: str) -> dict:
     asked_count = len(query("SELECT id FROM asks WHERE shift_id = ?", (shift_id,)))
     if asked_count >= MAX_ASKS_PER_SHIFT:
         return {"refused": f"Ask limit ({MAX_ASKS_PER_SHIFT}) reached. Escalate."}
+
+    # Fairness, enforced rather than suggested. The model is shown the ranking
+    # in rank_candidates; here it has to follow it. Anyone tied on the top score
+    # is fair game. Nobody else is, however likely they are to say yes.
+    ranked = _ranked(shift)
+    if not ranked:
+        return {"refused": "Nobody qualified and available is left. Escalate."}
+    fairest = {c["volunteer_id"] for c in ranked if c["score"] == ranked[0]["score"]}
+    if volunteer_id not in fairest:
+        return {
+            "refused": f"{ranked[0]['name']} ranks first on fairness for this shift. "
+                       f"Ask them before anyone else."
+        }
 
     expires = now() + timedelta(minutes=ASK_TIMEOUT_MINUTES)
     execute(

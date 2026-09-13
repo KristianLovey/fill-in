@@ -76,8 +76,15 @@ def seed_volunteers():
 
 
 def seed_shifts():
-    """A week of shifts starting tomorrow, all currently filled."""
-    base = now().replace(hour=9, minute=0, second=0) + timedelta(days=1)
+    """A week of shifts starting next Monday, all currently filled.
+
+    Anchored to a weekday, not to tomorrow. Availability is weekly, so a week
+    that began on whatever day the seed ran would match different volunteers to
+    each shift - and rank them differently - depending on the date. Starting on
+    a Monday makes the roster and every ranking identical on any day.
+    """
+    today = now().replace(hour=9, minute=0, second=0)
+    base = today + timedelta(days=7 - today.weekday())
     shift_id = 1
     for day in range(7):
         for role, cert in random.sample(ROLES, 3):
