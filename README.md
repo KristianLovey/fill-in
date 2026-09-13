@@ -123,8 +123,21 @@ pip install -r requirements.txt
 python data/seed.py
 ```
 
-Then give the agent a model. Either works — the hackathon requires Strands, not
-Bedrock:
+Then give the agent a model. Any of these works — the hackathon requires
+Strands, not a particular model provider.
+
+**Google Gemini — free tier, no card**
+
+```bash
+pip install "strands-agents[gemini]"
+setx GEMINI_API_KEY "your-key"
+setx FILLIN_PROVIDER gemini
+```
+
+Create the key at [Google AI Studio](https://aistudio.google.com/apikey), and
+open a new terminal after `setx`. Leave billing switched off on that project to
+stay on the free tier. Free-tier requests may be used by Google to improve its
+products; everything in this repo is synthetic, so nothing real is sent.
 
 **Amazon Bedrock**
 
@@ -153,8 +166,8 @@ python -m agent.cli doctor
 
 | Variable | Default | Notes |
 |---|---|---|
-| `FILLIN_PROVIDER` | whichever credentials exist | `bedrock` or `anthropic` |
-| `FILLIN_MODEL` | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Bedrock)<br>`claude-sonnet-5` (Anthropic) | Use a cheap model while iterating: `FILLIN_MODEL=claude-haiku-4-5` |
+| `FILLIN_PROVIDER` | whichever credentials exist | `gemini`, `bedrock` or `anthropic` |
+| `FILLIN_MODEL` | `gemini-3.8-flash` (Gemini)<br>`us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Bedrock)<br>`claude-sonnet-5` (Anthropic) | Something lighter while iterating, e.g. `gemini-3.5-flash-lite` or `claude-haiku-4-5` |
 | `PORT` | `5000` | Dashboard port |
 
 ### Run it

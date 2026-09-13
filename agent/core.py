@@ -20,11 +20,13 @@ from agent.tools import (
 
 # --------------------------------------------------------------- provider ----
 #
-# The hackathon requires Strands, not Bedrock. Both providers are wired up so
-# the demo is never blocked on an IAM console: set FILLIN_PROVIDER to pick one,
-# or leave it unset and whichever credentials exist win.
+# The hackathon requires Strands, not Bedrock or any particular model. Three
+# providers are wired up so the demo is never blocked on an IAM console or a
+# credit card: set FILLIN_PROVIDER to pick one, or leave it unset and whichever
+# credentials exist win. Gemini's free tier needs neither.
 
 DEFAULT_MODEL = {
+    "gemini": "gemini-3.8-flash",
     "bedrock": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     "anthropic": "claude-sonnet-5",
 }
@@ -33,6 +35,12 @@ SETUP_HINT = """
 No working model credentials found.
 
 Pick one of these:
+
+  Gemini (free tier)     pip install "strands-agents[gemini]"
+                         create a key at https://aistudio.google.com/apikey
+                         setx GEMINI_API_KEY "your-key"
+                         setx FILLIN_PROVIDER gemini
+                         then open a new terminal
 
   Bedrock (AWS)          set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and
                          AWS_DEFAULT_REGION=us-east-1, on an IAM user with
@@ -43,9 +51,9 @@ Pick one of these:
                          set ANTHROPIC_API_KEY
                          set FILLIN_PROVIDER=anthropic
 
-Override the model with FILLIN_MODEL. Use a cheap one while iterating
-(FILLIN_MODEL=claude-haiku-4-5 on the Anthropic provider) and the good one for
-the recording.
+Override the model with FILLIN_MODEL. Use a lighter one while iterating
+(gemini-3.5-flash-lite, or claude-haiku-4-5 on the Anthropic provider) and the
+stronger default for the recording.
 """.strip()
 
 
@@ -72,6 +80,8 @@ def resolve_provider():
         return "bedrock"
     if os.environ.get("ANTHROPIC_API_KEY"):
         return "anthropic"
+    if os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY"):
+        return "gemini"
     return ""
 
 
@@ -83,7 +93,7 @@ def build_model(provider=None):
     model_id = os.environ.get("FILLIN_MODEL") or DEFAULT_MODEL.get(provider)
     if not model_id:
         raise ProviderNotReady(
-            f"Unknown FILLIN_PROVIDER '{provider}'. Use 'bedrock' or 'anthropic'."
+            f"Unknown FILLIN_PROVIDER '{provider}'. Use 'gemini', 'bedrock' or 'anthropic'."
         )
 
     if provider == "anthropic":
@@ -97,12 +107,27 @@ def build_model(provider=None):
             ) from exc
         return AnthropicModel(model_id=model_id, max_tokens=2000)
 
+    if provider == "gemini":
+        # Same precedence as Google's own SDKs: GOOGLE_API_KEY wins if both exist.
+        key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if not key:
+            raise ProviderNotReady(
+                "FILLIN_PROVIDER=gemini but neither GEMINI_API_KEY nor GOOGLE_API_KEY is set."
+            )
+        try:
+            from strands.models.gemini import GeminiModel
+        except ImportError as exc:
+            raise ProviderNotReady(
+                'The Gemini provider needs: pip install "strands-agents[gemini]"'
+            ) from exc
+        return GeminiModel(client_args={"api_key": key}, model_id=model_id)
+
     if provider == "bedrock":
         from strands.models import BedrockModel
 
         return BedrockModel(model_id=model_id)
 
-    raise ProviderNotReady(f"Unknown FILLIN_PROVIDER '{provider}'. Use 'bedrock' or 'anthropic'.")
+    raise ProviderNotReady(f"Unknown FILLIN_PROVIDER '{provider}'. Use 'gemini', 'bedrock' or 'anthropic'.")
 
 
 # Credential failures surface deep inside botocore or httpx, as a wall of
@@ -117,6 +142,10 @@ _CREDENTIAL_MARKERS = (
     "authentication_error",
     "invalid x-api-key",
     "AccessDeniedError",
+    "API_KEY_INVALID",
+    "API key not valid",
+    "UNAUTHENTICATED",
+    "PERMISSION_DENIED",
 )
 
 
