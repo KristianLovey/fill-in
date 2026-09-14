@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fill In</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
 <style>
   /* -------------------------------------------------------------------- type
      Inter, self-hosted. Served from this repo rather than a CDN so the
@@ -94,7 +95,8 @@
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--rule);
   }
-  .brand { display: flex; align-items: baseline; gap: 11px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { display: block; width: 30px; height: 30px; border-radius: 7px; }
   .brand strong { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
   .brand span { color: var(--muted); font-size: 13px; }
 
@@ -562,6 +564,7 @@
 
 <div class="topbar">
   <div class="brand">
+    <img class="brand-mark" src="/static/logo-mark.png" alt="" width="30" height="30">
     <strong>Fill In</strong>
     <span>Community Kitchen, Main St</span>
   </div>
@@ -575,7 +578,7 @@
 
   <div class="actions">
     <button class="btn btn-wake" id="btn-wake"
-            title="Run one wake-up now (w). The scheduler already does this on its own - this is here so a demo does not have to wait 30 seconds.">
+            title="Run one wake-up now (w). The scheduler does this on its own. This button just saves waiting 30 seconds during a demo.">
       Wake now
     </button>
 
@@ -585,7 +588,7 @@
     </button>
 
     <a class="btn" href="/api/audit.csv" id="btn-csv"
-       title="Download the complete audit trail as CSV - every action, with timestamps.">
+       title="Download the full audit trail as CSV, with every action and its timestamp.">
       Export log
     </a>
 
@@ -638,15 +641,14 @@
       <section class="block amber-head sec-waiting">
         <h2 class="h2">Waiting for you</h2>
         <div class="accent"></div>
-        <p class="sub">A real decision, with the context to make it.</p>
+        <p class="sub">Decisions that need a person, with the details to make them.</p>
         <div id="escalations"></div>
       </section>
 
       <section class="block teal-head sec-fair">
         <h2 class="h2">Fairness</h2>
         <div class="accent"></div>
-        <p class="sub">Shifts worked in the last 30 days, on one scale. The agent
-          ranks the top group last &mdash; on purpose.</p>
+        <p class="sub">Shifts worked in the last 30 days. The agent asks the top group last.</p>
         <div id="fairness"></div>
         <p class="footnote" id="protected-note"></p>
       </section>
@@ -661,7 +663,7 @@
       <section class="block teal-head sec-policy">
         <h2 class="h2">Policy</h2>
         <div class="accent"></div>
-        <p class="sub">Enforced in tool code, not in the prompt.</p>
+        <p class="sub">These rules are checked in the tool code.</p>
         <dl class="policy" id="policy"></dl>
       </section>
     </div>
@@ -798,7 +800,7 @@ function renderShifts(shifts, policy, total) {
       for (let i = 0; i < policy.max_asks; i++) {
         meter.appendChild(el("i", i < shift.asks_used ? "on" : null));
       }
-      tipOn(meter, "The ask limit is enforced in send_ask(), not in the prompt. " +
+      tipOn(meter, "The ask limit is enforced in send_ask(). " +
                    "Ask " + (policy.max_asks + 1) + " is refused.");
       meterRow.appendChild(meter);
       card.appendChild(meterRow);
@@ -815,7 +817,7 @@ function renderEscalations(items) {
   if (!items.length) {
     const quiet = el("div", "quiet");
     quiet.appendChild(el("b", null, "✓  Nothing needs you."));
-    quiet.appendChild(el("span", null, "That is the default state, not an empty screen."));
+    quiet.appendChild(el("span", null, "New escalations will appear here."));
     host.appendChild(quiet);
     return;
   }
@@ -878,7 +880,7 @@ function fairGroup(host, label, people, peak, second) {
     track.appendChild(fill);
     row.appendChild(track);
 
-    tipOn(row, person.name + " — " + person.shifts + " shifts and " + person.asks +
+    tipOn(row, person.name + ": " + person.shifts + " shifts and " + person.asks +
                " asks in the last 30 days, " + person.response_rate + "% reply rate." +
                (person.protected ? " Pushed to the back of the queue." : ""));
     host.appendChild(row);
@@ -896,7 +898,7 @@ function renderFairness(roster) {
   document.getElementById("protected-note").textContent =
     roster.protected + " of " + roster.total + " volunteers have been asked " +
     roster.threshold + "+ times in 30 days, so the agent moves them to the back " +
-    "of the queue whatever their availability says.";
+    "of the queue.";
 }
 
 /* ---------------------------------------------------------------- week roster */
@@ -905,7 +907,7 @@ function renderWeek(week) {
   host.textContent = "";
   for (const dot of week.dots) {
     const node = el("span", "dot " + dot.status);
-    tipOn(node, dot.label + " — " + dot.status);
+    tipOn(node, dot.label + ", " + dot.status);
     host.appendChild(node);
   }
 
@@ -1045,7 +1047,7 @@ function freshness() {
   const stale = Date.now() - lastOkAt > STALE_MS;
   document.getElementById("pulse").classList.toggle("stale", stale || paused);
   if (stale && !paused) {
-    document.getElementById("tick-text").textContent = "connection lost — retrying";
+    document.getElementById("tick-text").textContent = "connection lost, retrying";
   }
 }
 
@@ -1069,8 +1071,7 @@ async function wake() {
         toast("Agent woke and moved " + woke.moved + " of " + woke.open_shifts +
               " open shift" + (woke.open_shifts === 1 ? "" : "s") + " forward.");
       } else {
-        toast("Agent woke. Nothing is open, so it did nothing — " +
-              "which is the correct answer.");
+        toast("Agent woke. No shifts are open, so there was nothing to do.");
       }
     } else {
       toast(body.error || ("Wake failed (HTTP " + res.status + ")"), true);

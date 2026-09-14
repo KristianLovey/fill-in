@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660"
      font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
      role="img" aria-labelledby="title desc">
-  <title id="title">Fill In - architecture</title>
+  <title id="title">Fill In architecture</title>
   <desc id="desc">A scheduler wakes a Strands agent, which acts only through six tools that
     read and write a SQLite database. Volunteers are asked one at a time. One arrow, drawn in
     amber, is the only path that interrupts the coordinator for a decision.</desc>
@@ -23,7 +23,7 @@
 
   <rect width="960" height="660" fill="#FFFFFF"/>
 
-  <text x="40" y="36" font-size="17" font-weight="600" fill="#1A2B2E">Fill In &#8212; architecture</text>
+  <text x="40" y="36" font-size="17" font-weight="600" fill="#1A2B2E">Fill In architecture</text>
 
   <!-- ============================== scheduler ============================== -->
   <rect x="40" y="70" width="190" height="84" rx="6" fill="#FFFFFF" stroke="#D9E0E0" stroke-width="1.5"/>
@@ -56,11 +56,10 @@
     <text x="742" y="170">one at a time, 5 max</text>
     <text x="742" y="196">20-minute window</text>
     <text x="742" y="222">no double-booking</text>
-    <text x="742" y="248" fill="#8C5B0F">the only way out</text>
+    <text x="742" y="248" fill="#8C5B0F">only path to a person</text>
   </g>
 
-  <text x="580" y="284" font-size="11" fill="#66787B">Every hard rule is a return statement in here,</text>
-  <text x="580" y="300" font-size="11" fill="#66787B">not a sentence in the prompt.</text>
+  <text x="580" y="292" font-size="11" fill="#66787B">All hard rules are checked in this file.</text>
 
   <!-- ================================ state ================================ -->
   <rect x="560" y="360" width="360" height="84" rx="6" fill="#FFFFFF" stroke="#D9E0E0" stroke-width="1.5"/>
@@ -111,6 +110,6 @@
   <text x="426" y="414" text-anchor="end" font-size="11.5" font-weight="600" fill="#8C5B0F"
         font-family="ui-monospace, SFMono-Regular, Consolas, monospace">escalate_to_human</text>
 
-  <text x="40" y="618" font-size="11" fill="#66787B">A missing certificate, an exhausted ask limit, a shift starting too soon &#8212; the tool returns a refusal, so the model cannot talk its way past it.</text>
-  <text x="40" y="638" font-size="11.5" font-weight="600" fill="#1A2B2E">Exactly one arrow above asks a person to decide.</text>
+  <text x="40" y="618" font-size="11" fill="#66787B">If a certificate is missing, the ask limit is used up or the shift starts too soon, the tool refuses, so the model cannot get around the rule.</text>
+  <text x="40" y="638" font-size="11.5" font-weight="600" fill="#1A2B2E">Only the escalate_to_human arrow asks a person to decide.</text>
 </svg>
