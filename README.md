@@ -207,7 +207,7 @@ person has to step in. The full audit log is below the cards.
 **Waiting for you** (right, amber) shows unresolved escalations. Each one
 includes the shift, the certificate it needs, who has already been contacted
 and who could cover it. Amber is only used for this. When nothing needs
-attention, the column shows a short message in teal.
+attention, the column shows a green all-clear message.
 
 The right side also shows **Fairness** (recent shifts for the three busiest
 volunteers next to the three the agent asks instead, on the same scale), **the
@@ -216,10 +216,13 @@ roster this week** (one dot per shift) and the **policy** the tools enforce.
 On a phone the page switches to one column and **Waiting for you** moves to the
 top, so the thing that needs attention is seen first.
 
-Colours have fixed meanings. The brand teal (3.3:1 contrast on white) and amber
-(2.2:1) work for borders and bars but are too light for small text, so labels
-use darker shades of the same colours. The font is Inter, served from
-`web/static/fonts/` instead of a CDN, so the page looks the same offline.
+The dashboard uses a light frosted-glass style: translucent cards over a soft
+pastel background. Colours have fixed meanings: teal for work the agent handled,
+amber only for escalations, and green for the all-clear state. The bright teal
+(3.3:1 contrast on white) and amber (2.2:1) are used for borders, bars and dots,
+and text uses darker shades that stay above 4.5:1 on the glass. The font is SF
+Pro on Apple devices and Inter everywhere else, served from `web/static/fonts/`,
+so the page looks the same offline.
 
 The top bar has four actions:
 
