@@ -289,7 +289,9 @@ def escalate_to_human(shift_id: int, reason: str, detail: str) -> dict:
     """Hand this shift to the coordinator. The only channel to a human.
 
     Use when the ask limit is exhausted, the shift starts within two hours,
-    no qualified volunteer exists, or anything looks ambiguous.
+    no qualified volunteer exists, or anything looks ambiguous. Refused while a
+    volunteer is still inside their response window, unless the shift starts
+    within two hours: waiting for their answer comes first.
 
     Args:
         shift_id: The shift in question.
@@ -303,6 +305,24 @@ def escalate_to_human(shift_id: int, reason: str, detail: str) -> dict:
     )
     if existing:
         return {"already_escalated": True, "shift_id": shift_id}
+
+    # Waiting is always a safe move, so escalating while someone is still
+    # deciding is refused. The one exception is a shift that is now too close to
+    # wait for them. In testing a model escalated while a volunteer had most of
+    # their window left, which would have taken the shift away from the agent.
+    target = query("SELECT starts_at FROM shifts WHERE id = ?", (shift_id,))
+    if target:
+        hours_left = (_parse(target[0]["starts_at"]) - now()).total_seconds() / 3600
+        deciding = query(
+            "SELECT v.name FROM asks a JOIN volunteers v ON v.id = a.volunteer_id "
+            "WHERE a.shift_id = ? AND a.status = 'pending' AND a.expires_at > ?",
+            (shift_id, iso(now())),
+        )
+        if deciding and hours_left >= URGENT_WINDOW_HOURS:
+            return {
+                "refused": f"{deciding[0]['name']} is still inside their response window. "
+                           f"Wait for their answer before escalating."
+            }
 
     # The model supplies the judgement. The fact a coordinator most needs in
     # order to act - who could actually cover this - is added here from the
